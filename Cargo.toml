@@ -10,3 +10,10 @@ rand = "0.4"
 [dependencies.uuid]
 version = "~0.2.0"
 features = ["v4"]
+
+[[bench]]
+name = "lookup"
+harness = false
+
+[dev-dependencies]
+criterion = "0.1.2"
