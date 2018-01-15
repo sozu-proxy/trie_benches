@@ -1,0 +1,12 @@
+[package]
+name = "trie"
+version = "0.1.0"
+authors = ["NotBad4U <alessio.coltellacci@clever-cloud.com>"]
+
+[dependencies]
+flame = "0.2.0"
+rand = "0.4"
+
+[dependencies.uuid]
+version = "~0.2.0"
+features = ["v4"]
