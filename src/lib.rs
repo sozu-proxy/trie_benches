@@ -1,3 +1,11 @@
+#![feature(macro_rules)]
+
+extern crate uuid;
+extern crate rand;
+
+pub mod seed;
+pub mod gen_seed;
+
 use std::{iter,str};
 use std::fmt::Debug;
 
