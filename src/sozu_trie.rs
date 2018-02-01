@@ -7,8 +7,6 @@ use gen_seed::{gen_uuid_seed_domain, gen_text_seed_domain, gen_seed_wilcard_doma
 pub type Key = Vec<u8>;
 pub type KeyValue<K,V> = (K,V);
 
-const BRANCH_FACTOR: usize = 4;
-
 #[derive(Debug,PartialEq)]
 pub struct TrieNode<V> {
   partial_key: Key,

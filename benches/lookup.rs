@@ -1,12 +1,9 @@
 #![feature(test)]
-#[macro_use]
 extern crate trie;
 #[macro_use]
 extern crate criterion;
 
-use trie::*;
 use trie::sozu_trie::*;
-use trie::gen_seed::*;
 use criterion::Criterion;
 
 static NB_ELEM_SEED: i32 = 10000;

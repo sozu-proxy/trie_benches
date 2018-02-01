@@ -1,5 +1,3 @@
-#![macro_escape]
-
 #[macro_export]
 macro_rules! gen_tld {
     () => (
