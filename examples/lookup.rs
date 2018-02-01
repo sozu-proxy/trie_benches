@@ -2,7 +2,6 @@ extern crate trie;
 
 use trie::sozu_trie::*;
 
-static NB_LOOKUP: i32 = 1000;
 static NB_ELEM_SEED: i32 = 10000;
 
 fn seed_known_domain(root: &mut TrieNode<u8>) {
@@ -23,7 +22,7 @@ fn main() {
         seed_bench_trie(&mut root, NB_ELEM_SEED);
         seed_known_domain(&mut root);
 
-    for _ in 0..NB_LOOKUP {
+    loop {
         root.domain_lookup(b"Washtucna.obeliskoide.org");
         root.domain_lookup(b"co-adjust.walll-fed.net");
         root.domain_lookup(b"axonne.coadminnistration.gov");
