@@ -3,7 +3,7 @@ extern crate trie;
 #[macro_use]
 extern crate criterion;
 
-use trie::sozu_trie::*;
+use trie::experiment1_trie::*;
 use criterion::Criterion;
 
 static NB_ELEM_SEED: i32 = 10000;
@@ -22,7 +22,7 @@ fn seed_known_domain(root: &mut TrieNode<u8>) {
 }
 
 fn bench_look(c: &mut Criterion) {
-    c.bench_function("lookup on registred domains", |b| {
+    c.bench_function("exp 1: registered domains", |b| {
         let mut root: TrieNode<u8> = TrieNode::root();
         seed_bench_trie(&mut root, NB_ELEM_SEED);
         seed_known_domain(&mut root);
@@ -43,7 +43,7 @@ fn bench_look(c: &mut Criterion) {
 }
 
 fn bench_lookup_on_unknown(c: &mut Criterion) {
-    c.bench_function("lookup on unregistred domains", |b| {
+    c.bench_function("exp 1: unregistered domains", |b| {
         let mut root: TrieNode<u8> = TrieNode::root();
         seed_bench_trie(&mut root, NB_ELEM_SEED);
         seed_known_domain(&mut root);

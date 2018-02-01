@@ -11,7 +11,11 @@ version = "~0.2.0"
 features = ["v4"]
 
 [[bench]]
-name = "lookup"
+name = "sozu"
+harness = false
+
+[[bench]]
+name = "experiment1"
 harness = false
 
 [dev-dependencies]
