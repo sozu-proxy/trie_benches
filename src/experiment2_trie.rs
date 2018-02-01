@@ -144,7 +144,7 @@ impl<V:Debug> TrieNode<V> {
     for (index, ref child_key) in self.keys.iter().enumerate() {
       let pos = partial_key.iter().zip(child_key.iter()).position(|(&a,&b)| a != b);
       match pos {
-        Some(i) => continue,
+        Some(_) => continue,
         None    => {
           if partial_key.len() > child_key.len()  {
             let i = child_key.len();

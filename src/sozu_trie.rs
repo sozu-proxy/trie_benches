@@ -69,7 +69,7 @@ impl<V:Debug> TrieNode<V> {
     assert_ne!(partial_key, &b""[..]);
 
     // checking directly the children
-    for (index, child) in self.children.iter_mut().enumerate() {
+    for child in self.children.iter_mut() {
       let pos = partial_key.iter().zip(child.partial_key.iter()).position(|(&a,&b)| a != b);
       match pos {
         Some(0) => continue,
@@ -128,7 +128,7 @@ impl<V:Debug> TrieNode<V> {
 
       let pos = partial_key.iter().zip(child.partial_key.iter()).position(|(&a,&b)| a != b);
       match pos {
-        Some(i) => continue,
+        Some(_) => continue,
         None    => {
           if partial_key.len() > child.partial_key.len()  {
             let i = child.partial_key.len();

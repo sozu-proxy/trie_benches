@@ -137,7 +137,7 @@ impl<V:Debug> TrieNode<V> {
     for (index, &mut (ref child_key, ref mut child)) in self.children.iter_mut().enumerate() {
       let pos = partial_key.iter().zip(child_key.iter()).position(|(&a,&b)| a != b);
       match pos {
-        Some(i) => continue,
+        Some(_) => continue,
         None    => {
           if partial_key.len() > child_key.len()  {
             let i = child_key.len();
@@ -216,7 +216,7 @@ impl<V:Debug> TrieNode<V> {
   pub fn domain_lookup_recursive(&self, partial_key: &[u8]) -> Option<&KeyValue<Key,V>> {
     assert_ne!(partial_key, &b""[..]);
 
-    for (index, &(ref child_key, ref child)) in self.children.iter().enumerate() {
+    for &(ref child_key, ref child) in self.children.iter() {
       let pos = partial_key.iter().zip(child_key.iter()).position(|(&a,&b)| a != b);
       match pos {
         Some(0) => continue,
