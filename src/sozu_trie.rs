@@ -289,3 +289,119 @@ pub fn seed_bench_trie(root: &mut TrieNode<u8>, nb_elems_seed: i32) {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn insert() {
+    let mut root: TrieNode<u8> = TrieNode::root();
+    root.print();
+
+    assert_eq!(root.insert(Vec::from(&b"abcd"[..]), 1), InsertResult::Ok);
+    root.print();
+    assert_eq!(root.insert(Vec::from(&b"abce"[..]), 2), InsertResult::Ok);
+    root.print();
+    assert_eq!(root.insert(Vec::from(&b"abgh"[..]), 3), InsertResult::Ok);
+    root.print();
+
+    assert_eq!(root.lookup(&b"abce"[..]), Some(&((&b"abce"[..]).to_vec(), 2)));
+    //assert!(false);
+  }
+
+  #[test]
+  fn remove() {
+    let mut root: TrieNode<u8> = TrieNode::root();
+
+    assert_eq!(root.insert(Vec::from(&b"abcd"[..]), 1), InsertResult::Ok);
+    assert_eq!(root.insert(Vec::from(&b"abce"[..]), 2), InsertResult::Ok);
+    assert_eq!(root.insert(Vec::from(&b"abgh"[..]), 3), InsertResult::Ok);
+
+    let mut root2: TrieNode<u8> = TrieNode::root();
+
+    assert_eq!(root2.insert(Vec::from(&b"abcd"[..]), 1), InsertResult::Ok);
+    assert_eq!(root2.insert(Vec::from(&b"abgh"[..]), 3), InsertResult::Ok);
+
+    println!("before remove");
+    root.print();
+    assert_eq!(root.remove(&Vec::from(&b"abce"[..])), RemoveResult::Ok);
+    println!("after remove");
+    root.print();
+    println!("expected");
+    root2.print();
+    assert_eq!(root, root2);
+
+    assert_eq!(root.remove(&Vec::from(&b"abgh"[..])), RemoveResult::Ok);
+    println!("after remove");
+    root.print();
+    println!("expected");
+    let mut root3: TrieNode<u8> = TrieNode::root();
+    assert_eq!(root3.insert(Vec::from(&b"abcd"[..]), 1), InsertResult::Ok);
+    root3.print();
+    assert_eq!(root, root3);
+  }
+
+  #[test]
+  fn add_child_to_leaf() {
+    let mut root: TrieNode<u8> = TrieNode::root();
+
+    assert_eq!(root.insert(Vec::from(&b"abcd"[..]), 1), InsertResult::Ok);
+    assert_eq!(root.insert(Vec::from(&b"abce"[..]), 2), InsertResult::Ok);
+    assert_eq!(root.insert(Vec::from(&b"abc"[..]), 3), InsertResult::Ok);
+
+    root.print();
+
+    let mut root2: TrieNode<u8> = TrieNode::root();
+
+    assert_eq!(root2.insert(Vec::from(&b"abc"[..]), 3), InsertResult::Ok);
+    assert_eq!(root2.insert(Vec::from(&b"abcd"[..]), 1), InsertResult::Ok);
+    assert_eq!(root2.insert(Vec::from(&b"abce"[..]), 2), InsertResult::Ok);
+
+    root2.print();
+    assert_eq!(root2.remove(&Vec::from(&b"abc"[..])), RemoveResult::Ok);
+
+    let mut expected: TrieNode<u8> = TrieNode::root();
+
+    assert_eq!(expected.insert(Vec::from(&b"abcd"[..]), 1), InsertResult::Ok);
+    assert_eq!(expected.insert(Vec::from(&b"abce"[..]), 2), InsertResult::Ok);
+
+    println!("after remove");
+    root2.print();
+    println!("expected");
+    expected.print();
+    assert_eq!(root2, expected);
+  }
+
+  #[test]
+  fn domains() {
+    let mut root: TrieNode<u8> = TrieNode::root();
+
+    assert_eq!(root.domain_insert(Vec::from(&b"www.example.com"[..]), 1), InsertResult::Ok);
+    root.print();
+    assert_eq!(root.domain_insert(Vec::from(&b"test.example.com"[..]), 2), InsertResult::Ok);
+    root.print();
+    assert_eq!(root.domain_insert(Vec::from(&b"*.alldomains.org"[..]), 3), InsertResult::Ok);
+    root.print();
+    assert_eq!(root.domain_insert(Vec::from(&b"alldomains.org"[..]), 4), InsertResult::Ok);
+    root.print();
+    assert_eq!(root.domain_insert(Vec::from(&b"hello.com"[..]), 5), InsertResult::Ok);
+    root.print();
+
+    assert_eq!(root.domain_lookup(&b"example.com"[..]), None);
+    assert_eq!(root.domain_lookup(&b"blah.test.example.com"[..]), None);
+    assert_eq!(root.domain_lookup(&b"www.example.com"[..]), Some(&((&b"www.example.com"[..]).to_vec(), 1)));
+    assert_eq!(root.domain_lookup(&b"alldomains.org"[..]), Some(&((&b"alldomains.org"[..]).to_vec(), 4)));
+    assert_eq!(root.domain_lookup(&b"test.alldomains.org"[..]), Some(&((&b"*.alldomains.org"[..]).to_vec(), 3)));
+    assert_eq!(root.domain_lookup(&b"hello.alldomains.org"[..]), Some(&((&b"*.alldomains.org"[..]).to_vec(), 3)));
+    assert_eq!(root.domain_lookup(&b"blah.test.alldomains.org"[..]), None);
+
+    assert_eq!(root.domain_remove(&Vec::from(&b"alldomains.org"[..])), RemoveResult::Ok);
+    println!("after remove");
+    root.print();
+    assert_eq!(root.domain_lookup(&b"alldomains.org"[..]), None);
+    assert_eq!(root.domain_lookup(&b"test.alldomains.org"[..]), Some(&((&b"*.alldomains.org"[..]).to_vec(), 3)));
+    assert_eq!(root.domain_lookup(&b"hello.alldomains.org"[..]), Some(&((&b"*.alldomains.org"[..]).to_vec(), 3)));
+    assert_eq!(root.domain_lookup(&b"blah.test.alldomains.org"[..]), None);
+  }
+}

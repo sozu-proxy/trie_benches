@@ -47,7 +47,6 @@ impl<V:Debug> TrieNode<V> {
   pub fn insert(&mut self, key: Key, value: V) -> InsertResult {
     let res = self.insert_recursive(&key, &key, value);
     assert_ne!(res, InsertResult::Failed);
-    //println!("adding {}", str::from_utf8(&key).unwrap());
     res
   }
 
@@ -94,7 +93,9 @@ impl<V:Debug> TrieNode<V> {
           None => {
           if partial_key.len() > child_key.len()  {
             let i = child_key.len();
-            return child.insert_recursive(&partial_key[i..], key, value);
+            let res = child.insert_recursive(&partial_key[i..], key, value);
+            self.children.push(((&partial_key[..i]).to_vec(), child));
+            return res;
           } else if partial_key.len() == child_key.len() {
             if child.key_value.is_some() {
               return InsertResult::Existing;
@@ -227,7 +228,7 @@ impl<V:Debug> TrieNode<V> {
             if (&partial_key[i..]).contains(&c) {
               return None;
             } else {
-              return self.key_value.as_ref();
+              return child.key_value.as_ref();
             }
           } else {
             return None;
@@ -284,4 +285,126 @@ pub fn seed_bench_trie(root: &mut TrieNode<u8>, nb_elems_seed: i32) {
             root.domain_insert(gen_seed_wilcard_domain(tld), 2);
         }
     }
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn insert() {
+    let mut root: TrieNode<u8> = TrieNode::root();
+    root.print();
+
+    assert_eq!(root.insert(Vec::from(&b"abcd"[..]), 1), InsertResult::Ok);
+    root.print();
+    assert_eq!(root.insert(Vec::from(&b"abce"[..]), 2), InsertResult::Ok);
+    root.print();
+    assert_eq!(root.insert(Vec::from(&b"abgh"[..]), 3), InsertResult::Ok);
+    root.print();
+
+    //assert_eq!(root.lookup(&b"abce"[..]), Some(&((&b"abce"[..]).to_vec(), 2)));
+    //assert!(false);
+  }
+
+  #[test]
+  fn remove() {
+    let mut root: TrieNode<u8> = TrieNode::root();
+
+    assert_eq!(root.insert(Vec::from(&b"abcd"[..]), 1), InsertResult::Ok);
+    assert_eq!(root.insert(Vec::from(&b"abce"[..]), 2), InsertResult::Ok);
+    assert_eq!(root.insert(Vec::from(&b"abgh"[..]), 3), InsertResult::Ok);
+
+    let mut root2: TrieNode<u8> = TrieNode::root();
+
+    assert_eq!(root2.insert(Vec::from(&b"abcd"[..]), 1), InsertResult::Ok);
+    assert_eq!(root2.insert(Vec::from(&b"abgh"[..]), 3), InsertResult::Ok);
+
+    println!("before remove");
+    root.print();
+    assert_eq!(root.remove(&Vec::from(&b"abce"[..])), RemoveResult::Ok);
+    println!("after remove");
+    root.print();
+    println!("expected");
+    root2.print();
+    assert_eq!(root, root2);
+
+    assert_eq!(root.remove(&Vec::from(&b"abgh"[..])), RemoveResult::Ok);
+    println!("after remove");
+    root.print();
+    println!("expected");
+    let mut root3: TrieNode<u8> = TrieNode::root();
+    assert_eq!(root3.insert(Vec::from(&b"abcd"[..]), 1), InsertResult::Ok);
+    root3.print();
+    assert_eq!(root, root3);
+  }
+
+  #[test]
+  fn add_child_to_leaf() {
+    let mut root: TrieNode<u8> = TrieNode::root();
+
+    assert_eq!(root.insert(Vec::from(&b"abcd"[..]), 1), InsertResult::Ok);
+    assert_eq!(root.insert(Vec::from(&b"abce"[..]), 2), InsertResult::Ok);
+    assert_eq!(root.insert(Vec::from(&b"abc"[..]), 3), InsertResult::Ok);
+
+    root.print();
+
+    println!("ROOT 2:");
+    let mut root2: TrieNode<u8> = TrieNode::root();
+
+    root2.print();
+    assert_eq!(root2.insert(Vec::from(&b"abc"[..]), 3), InsertResult::Ok);
+    root2.print();
+    assert_eq!(root2.insert(Vec::from(&b"abcd"[..]), 1), InsertResult::Ok);
+    root2.print();
+    assert_eq!(root2.insert(Vec::from(&b"abce"[..]), 2), InsertResult::Ok);
+
+    root2.print();
+    assert_eq!(root2.remove(&Vec::from(&b"abc"[..])), RemoveResult::Ok);
+
+    let mut expected: TrieNode<u8> = TrieNode::root();
+
+    assert_eq!(expected.insert(Vec::from(&b"abcd"[..]), 1), InsertResult::Ok);
+    assert_eq!(expected.insert(Vec::from(&b"abce"[..]), 2), InsertResult::Ok);
+
+    println!("after remove");
+    root2.print();
+    println!("expected");
+    expected.print();
+    assert_eq!(root2, expected);
+  }
+
+  #[test]
+  fn domains() {
+    let mut root: TrieNode<u8> = TrieNode::root();
+
+    assert_eq!(root.domain_insert(Vec::from(&b"www.example.com"[..]), 1), InsertResult::Ok);
+    root.print();
+    assert_eq!(root.domain_insert(Vec::from(&b"test.example.com"[..]), 2), InsertResult::Ok);
+    root.print();
+    assert_eq!(root.domain_insert(Vec::from(&b"*.alldomains.org"[..]), 3), InsertResult::Ok);
+    root.print();
+    assert_eq!(root.domain_insert(Vec::from(&b"alldomains.org"[..]), 4), InsertResult::Ok);
+    root.print();
+    assert_eq!(root.domain_insert(Vec::from(&b"hello.com"[..]), 5), InsertResult::Ok);
+    root.print();
+
+    println!("STARTING LOOKUPS\n");
+
+    assert_eq!(root.domain_lookup(&b"example.com"[..]), None);
+    assert_eq!(root.domain_lookup(&b"blah.test.example.com"[..]), None);
+    assert_eq!(root.domain_lookup(&b"www.example.com"[..]), Some(&((&b"www.example.com"[..]).to_vec(), 1)));
+    assert_eq!(root.domain_lookup(&b"alldomains.org"[..]), Some(&((&b"alldomains.org"[..]).to_vec(), 4)));
+    assert_eq!(root.domain_lookup(&b"test.alldomains.org"[..]), Some(&((&b"*.alldomains.org"[..]).to_vec(), 3)));
+    assert_eq!(root.domain_lookup(&b"hello.alldomains.org"[..]), Some(&((&b"*.alldomains.org"[..]).to_vec(), 3)));
+    assert_eq!(root.domain_lookup(&b"blah.test.alldomains.org"[..]), None);
+
+    assert_eq!(root.domain_remove(&Vec::from(&b"alldomains.org"[..])), RemoveResult::Ok);
+    println!("after remove");
+    root.print();
+    assert_eq!(root.domain_lookup(&b"alldomains.org"[..]), None);
+    assert_eq!(root.domain_lookup(&b"test.alldomains.org"[..]), Some(&((&b"*.alldomains.org"[..]).to_vec(), 3)));
+    assert_eq!(root.domain_lookup(&b"hello.alldomains.org"[..]), Some(&((&b"*.alldomains.org"[..]).to_vec(), 3)));
+    assert_eq!(root.domain_lookup(&b"blah.test.alldomains.org"[..]), None);
+  }
 }
