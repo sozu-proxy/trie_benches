@@ -2,6 +2,7 @@
 extern crate trie;
 
 use trie::*;
+use trie::sozu_trie::*;
 use trie::gen_seed::*;
 
 static NB_LOOKUP: i32 = 1000;
