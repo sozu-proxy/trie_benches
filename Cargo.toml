@@ -16,3 +16,6 @@ harness = false
 
 [dev-dependencies]
 criterion = "0.1.2"
+
+[profile.release]
+debug = true
