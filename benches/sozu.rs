@@ -21,6 +21,16 @@ fn seed_known_domain(root: &mut TrieNode<u8>) {
     root.domain_insert(Vec::from(&b"axolema.washe-pote.rs"[..]), 5);
 }
 
+fn bench_fill(c: &mut Criterion) {
+    c.bench_function("sozu: filling tree", |b| {
+
+        b.iter(|| {
+            let mut root: TrieNode<u8> = TrieNode::root();
+            seed_bench_trie(&mut root, 1000);
+        })
+    });
+}
+
 fn bench_look(c: &mut Criterion) {
     c.bench_function("sozu: registered domains", |b| {
         let mut root: TrieNode<u8> = TrieNode::root();
@@ -63,5 +73,5 @@ fn bench_lookup_on_unknown(c: &mut Criterion) {
     });
 }
 
-criterion_group!(lookup, bench_look, bench_lookup_on_unknown);
+criterion_group!(lookup, bench_fill, bench_look, bench_lookup_on_unknown);
 criterion_main!(lookup);
