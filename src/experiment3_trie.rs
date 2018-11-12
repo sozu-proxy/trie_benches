@@ -78,7 +78,7 @@ impl<V:Debug> TrieNode<V> {
       None => {
         if partial_key.len() > self.local_key.len() {
           //match self.child_keys.iter().position(|k| *k == partial_key[self.local_key.len()]) {
-          match self.child_keys.iter().position(|k| *k == partial_key[0]) {
+          match self.child_keys.iter().position(|k| *k == partial_key[self.local_key.len()]) {
             None => {
               let new_child = TrieNode {
                 key_value:  Some((key.clone(), value)),
