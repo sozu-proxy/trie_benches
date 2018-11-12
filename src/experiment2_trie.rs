@@ -107,9 +107,13 @@ impl<V:Debug> TrieNode<V> {
             return res;
           } else if partial_key.len() == child_key.len() {
             if child.key_value.is_some() {
+              self.keys.push(child_key);
+              self.children.push(child);
               return InsertResult::Existing;
             } else {
               child.key_value = Some((key.clone(), value));
+              self.keys.push(child_key);
+              self.children.push(child);
               return InsertResult::Ok;
             }
           } else {
