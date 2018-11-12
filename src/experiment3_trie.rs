@@ -1,4 +1,4 @@
-//! this experiment builds upon experiment 1, by separating the keys from the nodes.
+//! this experiment builds upon experiment 1, by separating the child_keys from the nodes.
 //! Now, instead of a single `Vec<(Key, TrieNode<V>)>`, there's a `Vec<Key>` and
 //! a `Vec<TrieNode<V>>`
 
@@ -13,9 +13,10 @@ pub type KeyValue<K,V> = (K,V);
 
 #[derive(Debug,PartialEq)]
 pub struct TrieNode<V> {
-  key_value: Option<KeyValue<Key,V>>,
-  keys:      Vec<Key>,
-  children:  Vec<TrieNode<V>>,
+  key_value:  Option<KeyValue<Key,V>>,
+  local_key:  Key,
+  child_keys: Vec<u8>,
+  children:   Vec<TrieNode<V>>,
 }
 
 #[derive(Debug,PartialEq)]
@@ -34,21 +35,30 @@ pub enum RemoveResult {
 impl<V:Debug> TrieNode<V> {
   pub fn new(key: Key, value: V) -> TrieNode<V> {
     TrieNode {
-      key_value:      Some((key, value)),
-      keys:           vec!(),
-      children:       vec!(),
+      key_value:  Some((key.clone(), value)),
+      local_key:  key,
+      child_keys: vec!(),
+      children:   vec!(),
     }
   }
 
   pub fn root() -> TrieNode<V> {
     TrieNode {
-      key_value:      None,
-      keys:           vec!(),
-      children:       vec!(),
+      key_value:  None,
+      local_key:  vec!(),
+      child_keys: vec!(),
+      children:   vec!(),
     }
   }
 
   pub fn insert(&mut self, key: Key, value: V) -> InsertResult {
+    //handle the root
+    if self.local_key.is_empty() && self.child_keys.is_empty() {
+      self.local_key = key.clone();
+      self.key_value = Some((key, value));
+      return InsertResult::Ok;
+    }
+
     let res = self.insert_recursive(&key, &key, value);
     assert_ne!(res, InsertResult::Failed);
     //println!("adding {}", str::from_utf8(&key).unwrap());
@@ -58,129 +68,197 @@ impl<V:Debug> TrieNode<V> {
   pub fn insert_recursive(&mut self, partial_key: &[u8], key: &Key, value: V) -> InsertResult {
     assert_ne!(partial_key, &b""[..]);
 
-    let mut found = None;
-    for (index, ref child_key) in self.keys.iter().enumerate() {
-      let pos = partial_key.iter().zip(child_key.iter()).position(|(&a,&b)| a != b);
-      match pos {
-        Some(0) => continue,
-        _       => found = Some(index),
-      }
-    }
+    /*println!("insert_recursive: partial_key={}, local_key={}",
+      str::from_utf8(partial_key).unwrap(),
+      str::from_utf8(&self.local_key).unwrap());
+    */
 
-    match found {
+    let pos = partial_key.iter().zip(self.local_key.iter()).position(|(&a,&b)| a != b);
+    match pos {
       None => {
-        let new_child = TrieNode {
-          key_value:   Some((key.clone(), value)),
-          keys:        vec!(),
-          children:    vec!(),
-        };
-        self.keys.push(partial_key.to_vec());
-        self.children.push(new_child);
-      },
-      Some(index) => {
-        let child_key = self.keys.remove(index);
-        let mut child = self.children.remove(index);
-        let pos = partial_key.iter().zip(child_key.iter()).position(|(&a,&b)| a != b);
-        match pos {
-          Some(i) => {
-            let new_child = TrieNode {
-              key_value:   Some((key.clone(), value)),
-              keys:        vec!(),
-              children:    vec!(),
-            };
+        if partial_key.len() > self.local_key.len() {
+          //match self.child_keys.iter().position(|k| *k == partial_key[self.local_key.len()]) {
+          match self.child_keys.iter().position(|k| *k == partial_key[0]) {
+            None => {
+              let new_child = TrieNode {
+                key_value:  Some((key.clone(), value)),
+                local_key:  partial_key[self.local_key.len()..].to_vec(),
+                child_keys: vec!(),
+                children:   vec!(),
+              };
+              self.child_keys.push(partial_key[self.local_key.len()]);
+              self.children.push(new_child);
 
-            let new_parent = TrieNode {
-              key_value: None,
-              keys:      vec!((&child_key[i..]).to_vec(), (&partial_key[i..]).to_vec()),
-              children:  vec!(child, new_child)
-            };
-
-            self.keys.push((&partial_key[..i]).to_vec());
-            self.children.push(new_parent);
-          },
-          None => {
-          if partial_key.len() > child_key.len()  {
-            let i = child_key.len();
-            let res = child.insert_recursive(&partial_key[i..], key, value);
-            self.keys.push((&partial_key[..i]).to_vec());
-            self.children.push(child);
-            return res;
-          } else if partial_key.len() == child_key.len() {
-            if child.key_value.is_some() {
-              self.keys.push(child_key);
-              self.children.push(child);
-              return InsertResult::Existing;
-            } else {
-              child.key_value = Some((key.clone(), value));
-              self.keys.push(child_key);
-              self.children.push(child);
               return InsertResult::Ok;
             }
+            Some(index) => {
+              return self.children[index].insert_recursive(&partial_key[self.local_key.len()..], key, value);
+            }
+          }
+        } else if partial_key.len() == self.local_key.len() {
+          if self.key_value.is_some() {
+            return InsertResult::Existing;
           } else {
-            // the partial key is smaller, insert as parent
-            let i = partial_key.len();
-            let new_parent = TrieNode {
-              key_value: Some((key.clone(), value)),
-              keys: vec!((&child_key[i..]).to_vec()),
-              children: vec!(child),
-            };
-            self.keys.push(partial_key.to_vec());
-            self.children.push(new_parent);
-
-            return InsertResult::Ok;
+            self.key_value =  Some((key.clone(), value));
           }
+        } else {
+          //partial key is smaller, so insert the new value above
+          //the current node
+          let new_child = TrieNode {
+            key_value:  self.key_value.take(),
+            local_key:  self.local_key[partial_key.len()..].to_vec(),
+            child_keys: vec!(),
+            children:   vec!(),
+          };
 
-          }
+          self.key_value =  Some((key.clone(), value));
+          self.child_keys.push(self.local_key[partial_key.len()]);
+          self.children.push(new_child);
+          self.local_key = partial_key.to_vec();
+
+          return InsertResult::Ok;
+
         }
+      },
+      Some(index) => {
+        let new_child1 = TrieNode {
+          key_value:  self.key_value.take(),
+          local_key:  self.local_key[index..].to_vec(),
+          child_keys: self.child_keys.drain(..).collect(),
+          children:   self.children.drain(..).collect(),
+        };
+        let new_child2 = TrieNode {
+          key_value:  Some((key.clone(), value)),
+          local_key:  partial_key[index..].to_vec(),
+          child_keys: vec!(),
+          children:   vec!(),
+        };
 
+        self.child_keys.push(self.local_key[index]);
+        self.children.push(new_child1);
+        self.child_keys.push(partial_key[index]);
+        self.children.push(new_child2);
+        self.local_key.truncate(index);
+        return InsertResult::Ok;
       }
     }
 
     return InsertResult::Ok;
   }
 
-  pub fn remove(&mut self, key: &Key) -> RemoveResult {
-    self.remove_recursive(key)
+  pub fn remove(&mut self, partial_key: &Key) -> RemoveResult {
+    /*println!("remove: partial_key={}, local_key={}",
+      str::from_utf8(partial_key).unwrap(),
+      str::from_utf8(&self.local_key).unwrap());
+      */
+
+    //we check the lower level's local_key in remove_recursive,
+    //so we handle the root node here
+    match partial_key.iter().zip(self.local_key.iter()).position(|(&a,&b)| a != b) {
+      None => {
+        let local_len = self.local_key.len();
+        if partial_key.len() > local_len {
+          self.remove_recursive(&partial_key[local_len..])
+        } else if partial_key.len() == local_len {
+          if self.key_value.is_some() {
+            self.key_value = None;
+            if self.child_keys.is_empty() {
+              self.local_key = vec!();
+            }
+
+            RemoveResult::Ok
+          } else {
+            RemoveResult::NotFound
+          }
+        } else {
+          RemoveResult::NotFound
+        }
+      },
+      Some(_) => RemoveResult::NotFound
+    }
+
   }
 
   pub fn remove_recursive(&mut self, partial_key: &[u8]) -> RemoveResult {
+    /*println!("remove_recursive: partial_key={}, local_key={}, child_keys={}",
+      str::from_utf8(partial_key).unwrap(),
+      str::from_utf8(&self.local_key).unwrap(),
+      str::from_utf8(&self.child_keys).unwrap());
+    */
+
     assert_ne!(partial_key, &b""[..]);
-
-    let mut found = None;
-
-    for (index, ref child_key) in self.keys.iter().enumerate() {
-      let pos = partial_key.iter().zip(child_key.iter()).position(|(&a,&b)| a != b);
-      match pos {
-        Some(_) => continue,
-        None    => {
-          if partial_key.len() > child_key.len()  {
-            let i = child_key.len();
-            return self.children[index].remove_recursive(&partial_key[i..]);
-          } else if partial_key.len() == child_key.len() {
-            found = Some(index);
-            break;
-          } else {
-            continue
+    match self.child_keys.iter().position(|k| *k == partial_key[0]) {
+      None => RemoveResult::NotFound,
+      Some(index) => {
+        let res = {
+          let child = &mut self.children[index];
+          match partial_key.iter().zip(child.local_key.iter()).position(|(&a,&b)| a != b) {
+            None => {
+              let child_local_len = child.local_key.len();
+              if partial_key.len() > child_local_len {
+                child.remove_recursive(&partial_key[child_local_len..])
+              } else if partial_key.len() == child_local_len {
+                if child.key_value.is_some() {
+        //println!("removing key_value: {:?}", child.key_value);
+                  child.key_value = None;
+                  RemoveResult::Ok
+                } else {
+                  RemoveResult::NotFound
+                }
+              } else {
+                RemoveResult::NotFound
+              }
+            },
+            Some(_) => RemoveResult::NotFound
           }
+        };
+
+        // we might have some cleanup to do
+        if res == RemoveResult::Ok {
+          /*println!("will cleanup. child has key_value:{} child has child_keys:{}",
+          self.children[index].key_value.is_some(),
+          self.children[index].child_keys.len());
+          self.print();
+          */
+
+
+          if self.children[index].key_value.is_none() && self.children[index].child_keys.is_empty() {
+            self.child_keys.remove(index);
+            self.children.remove(index);
+          }
+
+          if self.child_keys.len() == 1 {
+            match (self.key_value.is_some(), self.children[0].key_value.is_some()) {
+              // we keep the child because both current node and child have values
+              (true, true) => return res,
+              // we take the child's value
+              (false, true) => {
+                self.key_value = self.children[0].key_value.take();
+              },
+              _ => { }
+            }
+
+            let k = self.child_keys.remove(0);
+            let mut child = self.children.remove(0);
+            self.local_key.extend(child.local_key.drain(..));
+            if !child.child_keys.is_empty() {
+              self.child_keys = child.child_keys;
+              self.children = child.children;
+            }
+          }
+
+        /*
+        println!("remove_recursive: after cleanup partial_key={}, local_key={}, child_keys={}",
+      str::from_utf8(partial_key).unwrap(),
+      str::from_utf8(&self.local_key).unwrap(),
+      str::from_utf8(&self.child_keys).unwrap());
+          self.print();
+          */
+
         }
-      };
 
-    }
-
-    if let Some(index) = found {
-      if self.children[index].children.len() > 0 && self.children[index].key_value.is_some() {
-        self.children[index].key_value = None;
-        return RemoveResult::Ok;
-      } else {
-        self.keys.remove(index);
-        self.children.remove(index);
-
-        // we might get into a case where there's only one child, and we could merge it
-        // with the parent, but this case is not handle right now
-        return RemoveResult::Ok;
+        res
       }
-    } else {
-      RemoveResult::NotFound
     }
   }
 
@@ -188,6 +266,14 @@ impl<V:Debug> TrieNode<V> {
   pub fn domain_insert(&mut self, key: Key, value: V) -> InsertResult {
     let mut partial_key = key.clone();
     partial_key.reverse();
+
+    //handle the root
+    if self.local_key.is_empty() && self.child_keys.is_empty() {
+      self.local_key = partial_key;
+      self.key_value = Some((key, value));
+      return InsertResult::Ok;
+    }
+
     self.insert_recursive(&partial_key, &key, value)
   }
 
@@ -195,7 +281,7 @@ impl<V:Debug> TrieNode<V> {
   pub fn domain_remove(&mut self, key: &Key) -> RemoveResult {
     let mut partial_key = key.clone();
     partial_key.reverse();
-    self.remove_recursive(&partial_key)
+    self.remove(&partial_key)
   }
 
   // specific version that will handle wildcard domains
@@ -209,54 +295,65 @@ impl<V:Debug> TrieNode<V> {
   pub fn domain_lookup_recursive(&self, partial_key: &[u8]) -> Option<&KeyValue<Key,V>> {
     assert_ne!(partial_key, &b""[..]);
 
-    for (index, ref child_key) in self.keys.iter().enumerate() {
-      let pos = partial_key.iter().zip(child_key.iter()).position(|(&a,&b)| a != b);
-      match pos {
-        Some(0) => continue,
-        Some(i) => {
-          // check for wildcard
-          if i+1 == child_key.len() && child_key[i] == '*' as u8 {
-            let c = '.' as u8;
-            if (&partial_key[i..]).contains(&c) {
-              return None;
-            } else {
-              return self.children[index].key_value.as_ref();
+    /*println!("domain_lookup_recursive: partial_key={}, local_key={}, child_keys={}",
+      str::from_utf8(partial_key).unwrap(),
+      str::from_utf8(&self.local_key).unwrap(),
+      str::from_utf8(&self.child_keys).unwrap(),
+    );
+    */
+    let pos = partial_key.iter().zip(self.local_key.iter()).position(|(&a,&b)| a != b);
+    match pos {
+      None => {
+        let local_len = self.local_key.len();
+        if partial_key.len() > local_len {
+          match self.child_keys.iter().position(|k| *k == partial_key[local_len]) {
+            None => None,
+            Some(index) => {
+              self.children[index].domain_lookup_recursive(&partial_key[local_len..])
             }
-          } else {
-            return None;
           }
-        },
-        None    => {
-          if partial_key.len() > child_key.len() {
-            return self.children[index].domain_lookup_recursive(&partial_key[child_key.len()..]);
-          } else if partial_key.len() == child_key.len() {
-            return self.children[index].key_value.as_ref();
-          } else {
-            return None;
-          }
+        } else if partial_key.len() == local_len {
+          self.key_value.as_ref()
+        } else {
+          None
         }
+      },
+      Some(i) => {
+        // check for wildcard
+        if i+1 == self.local_key.len() && self.local_key[i] == '*' as u8 {
+          let c = '.' as u8;
+          if (&partial_key[i..]).contains(&c) {
+            None
+          } else {
+            self.key_value.as_ref()
+          }
+        } else {
+          None
+        }
+
       }
     }
-
-    None
   }
 
   pub fn print(&self) {
-    self.print_recursive(b"", 0)
+    self.print_recursive(b'.', 0)
   }
 
-  pub fn print_recursive(&self, partial_key: &[u8], indent:u8) {
+  pub fn print_recursive(&self, partial_key: u8, indent:u8) {
     let raw_prefix:Vec<u8> = iter::repeat(' ' as u8).take(2*indent as usize).collect();
     let prefix = str::from_utf8(&raw_prefix).unwrap();
+    let c: char = partial_key.into();
 
     if let Some((ref key, ref value)) = self.key_value {
-    println!("{}{}: ({},{:?})", prefix, str::from_utf8(partial_key).unwrap(),
+    println!("{}{}: {}|({},{:?})", prefix, c,
+      str::from_utf8(&self.local_key).unwrap(),
       str::from_utf8(&key).unwrap(), value);
     } else {
-    println!("{}{}: None", prefix, str::from_utf8(partial_key).unwrap());
+    println!("{}{}: {}|None", prefix, c,
+      str::from_utf8(&self.local_key).unwrap());
     }
-    for (ref child_key, ref child) in self.keys.iter().zip(self.children.iter()) {
-      child.print_recursive(&child_key, indent+1);
+    for (child_key, ref child) in self.child_keys.iter().zip(self.children.iter()) {
+      child.print_recursive(*child_key, indent+1);
     }
   }
 }
@@ -302,10 +399,18 @@ mod tests {
   #[test]
   fn remove() {
     let mut root: TrieNode<u8> = TrieNode::root();
+    println!("creating root:");
+    root.print();
 
+    println!("adding (abcd, 1)");
     assert_eq!(root.insert(Vec::from(&b"abcd"[..]), 1), InsertResult::Ok);
+    root.print();
+    println!("adding (abce, 2)");
     assert_eq!(root.insert(Vec::from(&b"abce"[..]), 2), InsertResult::Ok);
+    root.print();
+    println!("adding (abgh, 3)");
     assert_eq!(root.insert(Vec::from(&b"abgh"[..]), 3), InsertResult::Ok);
+    root.print();
 
     let mut root2: TrieNode<u8> = TrieNode::root();
 
@@ -317,6 +422,7 @@ mod tests {
     assert_eq!(root.remove(&Vec::from(&b"abce"[..])), RemoveResult::Ok);
     println!("after remove");
     root.print();
+
     println!("expected");
     root2.print();
     assert_eq!(root, root2);
@@ -333,13 +439,21 @@ mod tests {
 
   #[test]
   fn add_child_to_leaf() {
-    let mut root: TrieNode<u8> = TrieNode::root();
+    let mut root1: TrieNode<u8> = TrieNode::root();
 
-    assert_eq!(root.insert(Vec::from(&b"abcd"[..]), 1), InsertResult::Ok);
-    assert_eq!(root.insert(Vec::from(&b"abce"[..]), 2), InsertResult::Ok);
-    assert_eq!(root.insert(Vec::from(&b"abc"[..]), 3), InsertResult::Ok);
+    println!("creating root1:");
+    root1.print();
+    println!("adding (abcd, 1)");
+    assert_eq!(root1.insert(Vec::from(&b"abcd"[..]), 1), InsertResult::Ok);
+    root1.print();
+    println!("adding (abce, 2)");
+    assert_eq!(root1.insert(Vec::from(&b"abce"[..]), 2), InsertResult::Ok);
+    root1.print();
+    println!("adding (abc, 3)");
+    assert_eq!(root1.insert(Vec::from(&b"abc"[..]), 3), InsertResult::Ok);
 
-    root.print();
+    println!("root1:");
+    root1.print();
 
     let mut root2: TrieNode<u8> = TrieNode::root();
 
@@ -347,15 +461,18 @@ mod tests {
     assert_eq!(root2.insert(Vec::from(&b"abcd"[..]), 1), InsertResult::Ok);
     assert_eq!(root2.insert(Vec::from(&b"abce"[..]), 2), InsertResult::Ok);
 
+    println!("root2:");
     root2.print();
     assert_eq!(root2.remove(&Vec::from(&b"abc"[..])), RemoveResult::Ok);
 
+    println!("root2 after,remove:");
+    root2.print();
     let mut expected: TrieNode<u8> = TrieNode::root();
 
     assert_eq!(expected.insert(Vec::from(&b"abcd"[..]), 1), InsertResult::Ok);
     assert_eq!(expected.insert(Vec::from(&b"abce"[..]), 2), InsertResult::Ok);
 
-    println!("after remove");
+    println!("root2 after insert");
     root2.print();
     println!("expected");
     expected.print();
@@ -365,6 +482,7 @@ mod tests {
   #[test]
   fn domains() {
     let mut root: TrieNode<u8> = TrieNode::root();
+    root.print();
 
     assert_eq!(root.domain_insert(Vec::from(&b"www.example.com"[..]), 1), InsertResult::Ok);
     root.print();
