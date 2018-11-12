@@ -26,6 +26,10 @@ harness = false
 name = "experiment3"
 harness = false
 
+[[bench]]
+name = "experiment4"
+harness = false
+
 [dev-dependencies]
 criterion = "0.1.2"
 
