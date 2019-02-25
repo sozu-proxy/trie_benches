@@ -11,24 +11,31 @@ static ALLOC: jemallocator::Jemalloc = jemallocator::Jemalloc;
 
 use criterion::Criterion;
 use trie::gen_seed::*;
+use trie::{DomainLookup, InsertResult, RemoveResult, Key};
+use trie::gen_seed::seed_bench_trie;
 use std::collections::HashMap;
 use rand::XorShiftRng;
 
 static NB_ELEM_SEED: i32 = 10000;
 
-pub struct Map(HashMap<Vec<u8>, u8>);
+pub struct Map(HashMap<Vec<u8>, (Vec<u8>, u8)>);
 
-impl Map {
-  pub fn domain_insert(&mut self, key: Vec<u8>, value: u8) {
+impl DomainLookup<u8> for Map {
+  fn domain_insert(&mut self, key: Vec<u8>, value: u8) -> InsertResult {
     let mut partial_key = key.clone();
     partial_key.reverse();
-    self.0.insert(partial_key, value);
+    self.0.insert(partial_key, (key.clone(), value));
+    InsertResult::Ok
   }
 
-  pub fn domain_lookup(&self, key: &[u8]) -> Option<(Vec<u8>, u8)> {
+  fn domain_lookup(&self, key: &[u8]) -> Option<&(Vec<u8>, u8)> {
     let mut partial_key = key.to_vec();
     partial_key.reverse();
-    self.0.get(&partial_key).map(|v| (key.to_vec(), *v))
+    self.0.get(&partial_key)
+  }
+
+  fn domain_remove(&mut self, key: &Key) -> RemoveResult {
+    unimplemented!();
   }
 }
 
@@ -43,20 +50,6 @@ fn seed_known_domain(root: &mut Map) {
     root.domain_insert(Vec::from(&b"axolemma.aaaaxole.ca"[..]), 5);
     root.domain_insert(Vec::from(&b"washtail.coadeejute.au"[..]), 5);
     root.domain_insert(Vec::from(&b"axolema.washe-pote.rs"[..]), 5);
-}
-
-pub fn seed_bench_trie(root: &mut Map, nb_elems_seed: i32) {
-    let mut random = XorShiftRng::new_unseeded();
-    let domains = gen_domains!();
-    let tlds = gen_tld!();
-
-    for tld in tlds.iter() {
-        for _ in 0..nb_elems_seed / 3 {
-            root.domain_insert(gen_uuid_seed_domain(tld), 1);
-            root.domain_insert(gen_text_seed_domain(tld, &domains, &mut random), 2);
-            root.domain_insert(gen_seed_wilcard_domain(tld), 2);
-        }
-    }
 }
 
 fn bench_fill(c: &mut Criterion) {

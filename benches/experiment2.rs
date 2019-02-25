@@ -8,6 +8,8 @@ extern crate jemallocator;
 static ALLOC: jemallocator::Jemalloc = jemallocator::Jemalloc;
 
 use trie::experiment2_trie::*;
+use trie::DomainLookup;
+use trie::gen_seed::seed_bench_trie;
 use criterion::Criterion;
 
 static NB_ELEM_SEED: i32 = 10000;

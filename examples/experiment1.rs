@@ -1,5 +1,7 @@
 extern crate trie;
 
+use trie::DomainLookup;
+use trie::gen_seed::seed_bench_trie;
 use trie::experiment1_trie::*;
 
 static NB_ELEM_SEED: i32 = 10000;

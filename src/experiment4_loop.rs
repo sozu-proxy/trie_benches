@@ -2,32 +2,13 @@
 //! Now, instead of a single `Vec<(Key, List<V>)>`, there's a `Vec<Key>` and
 //! a `Vec<List<V>>`
 
-use std::{iter,str};
 use std::fmt::Debug;
-use rand::XorShiftRng;
 
-use gen_seed::{gen_uuid_seed_domain, gen_text_seed_domain, gen_seed_wilcard_domain};
-
-pub type Key = Vec<u8>;
-pub type KeyValue<K,V> = (K,V);
-
+use super::{Key, KeyValue, InsertResult, RemoveResult, DomainLookup};
 
 #[derive(Debug,PartialEq)]
 pub struct List<V> {
   pub acl : Vec<(Vec<u8>, KeyValue<Key, V>)>,
-}
-
-#[derive(Debug,PartialEq)]
-pub enum InsertResult {
-  Ok,
-  Existing,
-  Failed
-}
-
-#[derive(Debug,PartialEq)]
-pub enum RemoveResult {
-  Ok,
-  NotFound,
 }
 
 impl<V:Debug> List<V> {
@@ -49,8 +30,14 @@ impl<V:Debug> List<V> {
     InsertResult::Ok
   }
 
+  pub fn print(&self) {
+    println!("{:?}", self);
+  }
+}
+
+impl<V: Debug> DomainLookup<V> for List<V> {
   // specific version that will handle wildcard domains
-  pub fn domain_insert(&mut self, key: Key, value: V) -> InsertResult {
+  fn domain_insert(&mut self, key: Key, value: V) -> InsertResult {
     let mut partial_key = key.clone();
     partial_key.reverse();
     self.acl.push((partial_key, (key, value)));
@@ -58,7 +45,7 @@ impl<V:Debug> List<V> {
   }
 
   // specific version that will handle wildcard domains
-  pub fn domain_remove(&mut self, key: &Key) -> RemoveResult {
+  fn domain_remove(&mut self, key: &Key) -> RemoveResult {
     let mut partial_key = key.clone();
     partial_key.reverse();
     match self.acl.iter().position(|v| v.0 == partial_key) {
@@ -75,7 +62,7 @@ impl<V:Debug> List<V> {
   }
 
   // specific version that will handle wildcard domains
-  pub fn domain_lookup(&self, key: &[u8]) -> Option<&KeyValue<Key,V>> {
+  fn domain_lookup(&self, key: &[u8]) -> Option<&KeyValue<Key,V>> {
     let mut partial_key = key.to_vec();
     partial_key.reverse();
 
@@ -102,28 +89,6 @@ impl<V:Debug> List<V> {
 
     None
   }
-
-  pub fn print(&self) {
-    println!("{:?}", self);
-  }
-}
-
-/// Feed a seed trie with: (nb_elems_seed)
-/// 1/3 uui.uuid.tld
-/// 1/3 domain_text.uuid.tld
-/// 1/3 *.uuid.tld
-pub fn seed_bench_trie(root: &mut List<u8>, nb_elems_seed: i32) {
-    let mut random = XorShiftRng::new_unseeded();
-    let domains = gen_domains!();
-    let tlds = gen_tld!();
-
-    for tld in tlds.iter() {
-        for _ in 0..nb_elems_seed / 3 {
-            root.domain_insert(gen_uuid_seed_domain(tld), 1);
-            root.domain_insert(gen_text_seed_domain(tld, &domains, &mut random), 2);
-            root.domain_insert(gen_seed_wilcard_domain(tld), 2);
-        }
-    }
 }
 
 #[cfg(test)]
