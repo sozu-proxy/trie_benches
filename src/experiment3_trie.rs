@@ -1,6 +1,9 @@
-//! this experiment builds upon experiment 1, by separating the child_keys from the nodes.
-//! Now, instead of a single `Vec<(Key, TrieNode<V>)>`, there's a `Vec<Key>` and
-//! a `Vec<TrieNode<V>>`
+//! this is an optimization of experiment 2.
+//! Instead of storing all of the children's key, we separate them in a LocalKey,
+//! which is the common prefix for all of the child keys. The the child_keys
+//! vector only contains the next byte for each child key.
+//! If the lookup does not match the local key, no need to check the cildren. And we only
+//! need to find the correct byte in the child_keys vec to know the next child
 
 use std::{iter,str};
 use std::fmt::Debug;
