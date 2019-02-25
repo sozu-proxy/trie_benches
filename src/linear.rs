@@ -1,6 +1,4 @@
-//! this experiment builds upon experiment 1, by separating the child_keys from the nodes.
-//! Now, instead of a single `Vec<(Key, List<V>)>`, there's a `Vec<Key>` and
-//! a `Vec<List<V>>`
+//! this example uses a list of ACL tested in linear order
 
 use std::fmt::Debug;
 

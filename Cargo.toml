@@ -28,7 +28,7 @@ name = "experiment3"
 harness = false
 
 [[bench]]
-name = "experiment4"
+name = "linear"
 harness = false
 
 [[bench]]

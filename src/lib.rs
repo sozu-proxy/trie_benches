@@ -8,7 +8,8 @@ pub mod sozu_trie;
 pub mod experiment1_trie;
 pub mod experiment2_trie;
 pub mod experiment3_trie;
-pub mod experiment4_loop;
+pub mod linear;
+pub mod hashmap;
 
 pub type Key = Vec<u8>;
 pub type KeyValue<K,V> = (K,V);

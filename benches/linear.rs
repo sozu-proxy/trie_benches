@@ -7,7 +7,7 @@ extern crate jemallocator;
 #[global_allocator]
 static ALLOC: jemallocator::Jemalloc = jemallocator::Jemalloc;
 
-use trie::experiment4_loop::*;
+use trie::linear::*;
 use trie::DomainLookup;
 use trie::gen_seed::seed_bench_trie;
 use criterion::Criterion;
@@ -28,7 +28,7 @@ fn seed_known_domain(root: &mut List<u8>) {
 }
 
 fn bench_fill(c: &mut Criterion) {
-    c.bench_function("exp 4: filling tree", |b| {
+    c.bench_function("linear: filling tree", |b| {
 
         b.iter(|| {
             let mut root: List<u8> = List::root();
@@ -38,7 +38,7 @@ fn bench_fill(c: &mut Criterion) {
 }
 
 fn bench_look(c: &mut Criterion) {
-    c.bench_function("exp 4: registered domains", |b| {
+    c.bench_function("linear: registered domains", |b| {
         let mut root: List<u8> = List::root();
         seed_known_domain(&mut root);
         seed_bench_trie(&mut root, NB_ELEM_SEED);
@@ -59,7 +59,7 @@ fn bench_look(c: &mut Criterion) {
 }
 
 fn bench_lookup_on_unknown(c: &mut Criterion) {
-    c.bench_function("exp 4: unregistered domains", |b| {
+    c.bench_function("linear: unregistered domains", |b| {
         let mut root: List<u8> = List::root();
         seed_known_domain(&mut root);
         seed_bench_trie(&mut root, NB_ELEM_SEED);
