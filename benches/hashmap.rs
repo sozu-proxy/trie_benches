@@ -12,32 +12,11 @@ static ALLOC: jemallocator::Jemalloc = jemallocator::Jemalloc;
 use criterion::Criterion;
 use trie::gen_seed::*;
 use trie::{DomainLookup, InsertResult, RemoveResult, Key};
-use trie::gen_seed::seed_bench_trie;
-use std::collections::HashMap;
+use trie::hashmap::*;
+
 use rand::XorShiftRng;
 
 static NB_ELEM_SEED: i32 = 10000;
-
-pub struct Map(HashMap<Vec<u8>, (Vec<u8>, u8)>);
-
-impl DomainLookup<u8> for Map {
-  fn domain_insert(&mut self, key: Vec<u8>, value: u8) -> InsertResult {
-    let mut partial_key = key.clone();
-    partial_key.reverse();
-    self.0.insert(partial_key, (key.clone(), value));
-    InsertResult::Ok
-  }
-
-  fn domain_lookup(&self, key: &[u8]) -> Option<&(Vec<u8>, u8)> {
-    let mut partial_key = key.to_vec();
-    partial_key.reverse();
-    self.0.get(&partial_key)
-  }
-
-  fn domain_remove(&mut self, key: &Key) -> RemoveResult {
-    unimplemented!();
-  }
-}
 
 fn seed_known_domain(root: &mut Map) {
     root.domain_insert(Vec::from(&b"axofugal.obelis.com"[..]), 5);
@@ -56,7 +35,7 @@ fn bench_fill(c: &mut Criterion) {
     c.bench_function("hashmap: filling tree", |b| {
 
         b.iter(|| {
-            let mut root = Map(HashMap::new());
+            let mut root = Map::new();
             seed_bench_trie(&mut root, 1000);
         })
     });
@@ -64,7 +43,7 @@ fn bench_fill(c: &mut Criterion) {
 
 fn bench_look(c: &mut Criterion) {
     c.bench_function("hashmap: registered domains", |b| {
-        let mut root = Map(HashMap::new());
+        let mut root = Map::new();
         seed_bench_trie(&mut root, NB_ELEM_SEED);
         seed_known_domain(&mut root);
 
@@ -85,7 +64,7 @@ fn bench_look(c: &mut Criterion) {
 
 fn bench_lookup_on_unknown(c: &mut Criterion) {
     c.bench_function("hashmap: unregistered domains", |b| {
-        let mut root = Map(HashMap::new());
+        let mut root = Map::new();
         seed_bench_trie(&mut root, NB_ELEM_SEED);
         seed_known_domain(&mut root);
 
