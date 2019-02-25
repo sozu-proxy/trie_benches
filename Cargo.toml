@@ -31,6 +31,10 @@ harness = false
 name = "experiment4"
 harness = false
 
+[[bench]]
+name = "hashmap"
+harness = false
+
 [dev-dependencies]
 criterion = "0.1.2"
 
