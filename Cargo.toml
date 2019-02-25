@@ -5,6 +5,7 @@ authors = ["NotBad4U <alessio.coltellacci@clever-cloud.com>"]
 
 [dependencies]
 rand = "0.4"
+jemallocator = "^0.1"
 
 [dependencies.uuid]
 version = "~0.2.0"
@@ -35,3 +36,10 @@ criterion = "0.1.2"
 
 [profile.release]
 debug = true
+lto = true
+codegen-units = 1
+
+[profile.bench]
+debug = true
+lto = true
+codegen-units = 1
