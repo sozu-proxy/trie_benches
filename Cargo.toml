@@ -35,8 +35,20 @@ harness = false
 name = "hashmap"
 harness = false
 
+[[bench]]
+name = "filling"
+harness = false
+
+[[bench]]
+name = "lookup"
+harness = false
+
+[[bench]]
+name = "unknown_lookup"
+harness = false
+
 [dev-dependencies]
-criterion = "0.1.2"
+criterion = "0.2"
 
 [profile.release]
 debug = true
