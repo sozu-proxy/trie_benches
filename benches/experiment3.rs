@@ -14,19 +14,6 @@ use criterion::Criterion;
 
 static NB_ELEM_SEED: i32 = 10000;
 
-fn seed_known_domain(root: &mut TrieNode<u8>) {
-    root.domain_insert(Vec::from(&b"axofugal.obelis.com"[..]), 5);
-    root.domain_insert(Vec::from(&b"Washtucna.obeliskoide.org"[..]), 5);
-    root.domain_insert(Vec::from(&b"co-adjust.walll-fed.net"[..]), 5);
-    root.domain_insert(Vec::from(&b"axonne.coadminnistration.gov"[..]), 5);
-    root.domain_insert(Vec::from(&b"washwomean.coadjuvant.mil"[..]), 5);
-    root.domain_insert(Vec::from(&b"obeliske.coadjuv.io"[..]), 5);
-    root.domain_insert(Vec::from(&b"coadunatione.coadministration.th"[..]), 5);
-    root.domain_insert(Vec::from(&b"axolemma.aaaaxole.ca"[..]), 5);
-    root.domain_insert(Vec::from(&b"washtail.coadeejute.au"[..]), 5);
-    root.domain_insert(Vec::from(&b"axolema.washe-pote.rs"[..]), 5);
-}
-
 fn bench_fill(c: &mut Criterion) {
     c.bench_function("exp 3: filling tree", |b| {
 
