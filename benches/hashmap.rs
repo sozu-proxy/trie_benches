@@ -60,7 +60,7 @@ pub fn seed_bench_trie(root: &mut Map, nb_elems_seed: i32) {
 }
 
 fn bench_fill(c: &mut Criterion) {
-    c.bench_function("exp 1: filling tree", |b| {
+    c.bench_function("hashmap: filling tree", |b| {
 
         b.iter(|| {
             let mut root = Map(HashMap::new());
@@ -70,7 +70,7 @@ fn bench_fill(c: &mut Criterion) {
 }
 
 fn bench_look(c: &mut Criterion) {
-    c.bench_function("exp 1: registered domains", |b| {
+    c.bench_function("hashmap: registered domains", |b| {
         let mut root = Map(HashMap::new());
         seed_bench_trie(&mut root, NB_ELEM_SEED);
         seed_known_domain(&mut root);
@@ -91,7 +91,7 @@ fn bench_look(c: &mut Criterion) {
 }
 
 fn bench_lookup_on_unknown(c: &mut Criterion) {
-    c.bench_function("exp 1: unregistered domains", |b| {
+    c.bench_function("hashmap: unregistered domains", |b| {
         let mut root = Map(HashMap::new());
         seed_bench_trie(&mut root, NB_ELEM_SEED);
         seed_known_domain(&mut root);
