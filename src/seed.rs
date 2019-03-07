@@ -37,7 +37,7 @@ macro_rules! gen_domains {
             "coadapted",
             "coadapting",
             "coadequate",
-            "Coady",
+            "coady",
             "coadjacence",
             "coadjacency",
             "coadjacent",

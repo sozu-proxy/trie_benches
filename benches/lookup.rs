@@ -17,7 +17,7 @@ fn lookup<T: DomainLookup<u8>>(mut root: T, b: &mut Bencher, nb_elem_seed: i32) 
   seed_known_domain(&mut root);
 
   b.iter(|| {
-    root.domain_lookup(b"Washtucna.obeliskoide.org");
+    root.domain_lookup(b"washtucna.obeliskoide.org");
     root.domain_lookup(b"co-adjust.walll-fed.net");
     root.domain_lookup(b"axonne.coadminnistration.gov");
     root.domain_lookup(b"axofugal.obelis.com");
