@@ -30,6 +30,11 @@ fn bench_fill(c: &mut Criterion) {
         let mut root: trie::experiment3_trie::TrieNode<u8> = trie::experiment3_trie::TrieNode::root();
         seed_bench_trie(&mut root, *n);
       }))
+      .with_function("exp4", |b, n| b.iter(|| {
+        let mut root: trie::experiment4_fst::Machine<u8> = trie::experiment4_fst::Machine::new();
+        seed_bench_trie(&mut root, *n);
+        root.finish();
+      }))
       .with_function("sozu", |b, n| b.iter(|| {
         let mut root: trie::sozu_trie::TrieNode<u8> = trie::sozu_trie::TrieNode::root();
         seed_bench_trie(&mut root, *n);

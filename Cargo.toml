@@ -6,6 +6,7 @@ authors = ["NotBad4U <alessio.coltellacci@clever-cloud.com>"]
 [dependencies]
 rand = "0.4"
 jemallocator = "^0.1"
+fst = "^0.2"
 
 [dependencies.uuid]
 version = "~0.2.0"
