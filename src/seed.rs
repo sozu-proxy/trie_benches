@@ -2,16 +2,16 @@
 macro_rules! gen_tld {
     () => (
         vec![
-            ".com",
-            ".org",
-            ".net",
-            ".gov",
-            ".mil",
-            ".io",
-            ".th",
-            ".ca",
-            ".au",
-            ".rs",
+            "com",
+            "org",
+            "net",
+            "gov",
+            "mil",
+            "io",
+            "th",
+            "ca",
+            "au",
+            "rs",
         ];
     )
 }
@@ -33,7 +33,7 @@ macro_rules! gen_domains {
             "axometry",
             "axometric",
             "axon",
-            "coadaptations,",
+            "coadaptations",
             "coadapted",
             "coadapting",
             "coadequate",
