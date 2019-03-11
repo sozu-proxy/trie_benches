@@ -1,6 +1,7 @@
 extern crate uuid;
 extern crate rand;
 extern crate fst;
+extern crate bitvec;
 
 #[macro_use]
 pub mod seed;
@@ -10,6 +11,8 @@ pub mod experiment1_trie;
 pub mod experiment2_trie;
 pub mod experiment3_trie;
 pub mod experiment4_fst;
+pub mod experiment5_trie_bitvec;
+pub mod experiment6_fst_bitvec;
 pub mod linear;
 pub mod hashmap;
 

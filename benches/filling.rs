@@ -14,7 +14,7 @@ use criterion::{Criterion, ParameterizedBenchmark};
 
 
 fn bench_fill(c: &mut Criterion) {
-    let nb_elems_seed = 1000i32;
+    let nb_elems_seed = 100i32;
 
     c.bench(
       "agg:filling tree",
@@ -39,6 +39,18 @@ fn bench_fill(c: &mut Criterion) {
         seed_known_domain(&mut root);
         root.finish();
       }))
+      /*.with_function("exp5", |b, n| b.iter(|| {
+        let mut root: trie::experiment5_trie_bitvec::TrieNode<u8> = trie::experiment5_trie_bitvec::TrieNode::root();
+        seed_bench_trie(&mut root, *n);
+        seed_known_domain(&mut root);
+      }))
+      .with_function("exp6", |b, n| b.iter(|| {
+        let mut root: trie::experiment6_fst_bitvec::Machine<u8> = trie::experiment6_fst_bitvec::Machine::new();
+        seed_bench_trie(&mut root, *n);
+        seed_known_domain(&mut root);
+        root.finish();
+      }))
+      */
       .with_function("sozu", |b, n| b.iter(|| {
         let mut root: trie::sozu_trie::TrieNode<u8> = trie::sozu_trie::TrieNode::root();
         seed_bench_trie(&mut root, *n);

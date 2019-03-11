@@ -66,6 +66,30 @@ fn bench_lookup(c: &mut Criterion) {
           root.domain_lookup(b"axolema.washe-pote.rs")
         });
       })
+      /*.with_function("exp5", |mut b, n| {
+        let root: trie::experiment5_trie_bitvec::TrieNode<u8> = trie::experiment5_trie_bitvec::TrieNode::root();
+        lookup(root, &mut b, *n);
+      })
+      .with_function("exp6", |mut b, n| {
+        let mut root: trie::experiment6_fst_bitvec::Machine<u8> = trie::experiment6_fst_bitvec::Machine::new();
+        seed_bench_trie(&mut root, *n);
+        seed_known_domain(&mut root);
+        root.finish();
+
+        b.iter(|| {
+          root.domain_lookup(b"washtucna.obeliskoide.org");
+          root.domain_lookup(b"co-adjust.walll-fed.net");
+          root.domain_lookup(b"axonne.coadminnistration.gov");
+          root.domain_lookup(b"axofugal.obelis.com");
+          root.domain_lookup(b"washwomean.coadjuvant.mil");
+          root.domain_lookup(b"obeliske.coadjuv.io");
+          root.domain_lookup(b"coadunatione.coadministration.th");
+          root.domain_lookup(b"axolemma.aaaaxole.ca");
+          root.domain_lookup(b"washtail.coadeejute.au");
+          root.domain_lookup(b"axolema.washe-pote.rs")
+        });
+      })
+      */
       .with_function("sozu", |mut b, n| {
         let root: trie::sozu_trie::TrieNode<u8> = trie::sozu_trie::TrieNode::root();
         lookup(root, &mut b, *n);
