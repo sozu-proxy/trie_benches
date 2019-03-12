@@ -28,6 +28,14 @@ impl<V:Debug> TrieNode<V> {
     }
   }
 
+  pub fn size(&self) -> usize {
+    ::std::mem::size_of::<TrieNode<V>>() +
+      ::std::mem::size_of::<Option<KeyValue<Key, V>>>()
+      + self.local_key.len()
+      + self.child_keys.len()
+      + self.children.iter().fold(0, |acc, c| acc + c.size())
+  }
+
   pub fn root() -> TrieNode<V> {
     TrieNode {
       key_value:  None,
