@@ -51,6 +51,12 @@ fn bench_fill(c: &mut Criterion) {
         root.finish();
       }))
       */
+      .with_function("exp7", |b, n| b.iter(|| {
+        let mut root: trie::experiment7_regexset::Machine<u8> = trie::experiment7_regexset::Machine::new();
+        trie::experiment7_regexset::seed_bench_trie(&mut root, *n);
+        trie::experiment7_regexset::seed_known_domain(&mut root);
+        root.finish();
+      }))
       .with_function("sozu", |b, n| b.iter(|| {
         let mut root: trie::sozu_trie::TrieNode<u8> = trie::sozu_trie::TrieNode::root();
         seed_bench_trie(&mut root, *n);

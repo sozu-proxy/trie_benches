@@ -2,6 +2,7 @@ extern crate uuid;
 extern crate rand;
 extern crate fst;
 extern crate bitvec;
+extern crate regex;
 
 #[macro_use]
 pub mod seed;
@@ -13,6 +14,7 @@ pub mod experiment3_trie;
 pub mod experiment4_fst;
 pub mod experiment5_trie_bitvec;
 pub mod experiment6_fst_bitvec;
+pub mod experiment7_regexset;
 pub mod linear;
 pub mod hashmap;
 
