@@ -1,8 +1,7 @@
 //! this example uses a list of ACL tested in linear order
 
-use std::fmt::Debug;
-use super::{Key, KeyValue, InsertResult, RemoveResult, DomainLookup};
-use std::collections::HashMap;
+use super::{Key, InsertResult, RemoveResult, DomainLookup};
+use hashbrown::HashMap;
 
 pub struct Map(HashMap<Vec<u8>, (Vec<u8>, u8)>);
 
@@ -26,7 +25,7 @@ impl DomainLookup<u8> for Map {
     self.0.get(&partial_key)
   }
 
-  fn domain_remove(&mut self, key: &Key) -> RemoveResult {
+  fn domain_remove(&mut self, _key: &Key) -> RemoveResult {
     unimplemented!();
   }
 }

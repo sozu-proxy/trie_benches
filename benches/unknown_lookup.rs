@@ -89,7 +89,6 @@ fn bench_lookup(c: &mut Criterion) {
           root.domain_lookup(b"book.mac.rs")
         })
       })
-      */
       .with_function("exp7", |b, n| {
         let mut root: trie::experiment7_regexset::Machine<u8> = trie::experiment7_regexset::Machine::new();
         trie::experiment7_regexset::seed_bench_trie(&mut root, *n);
@@ -109,6 +108,7 @@ fn bench_lookup(c: &mut Criterion) {
           root.domain_lookup(b"book.mac.rs")
         });
       })
+      */
       .with_function("sozu", |mut b, n| {
         let root: trie::sozu_trie::TrieNode<u8> = trie::sozu_trie::TrieNode::root();
         lookup(root, &mut b, *n);

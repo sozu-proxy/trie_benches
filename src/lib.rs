@@ -3,6 +3,7 @@ extern crate rand;
 extern crate fst;
 extern crate bitvec;
 extern crate regex;
+extern crate hashbrown;
 
 #[macro_use]
 pub mod seed;

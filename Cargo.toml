@@ -9,6 +9,7 @@ jemallocator = "^0.1"
 fst = "^0.2"
 bitvec = "0.10"
 regex = "1.1"
+hashbrown = "0.1"
 
 [dependencies.uuid]
 version = "~0.2.0"
