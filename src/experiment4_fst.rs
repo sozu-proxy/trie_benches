@@ -3,7 +3,7 @@
 //! this example uses a state machine that must be completely regenerated
 //! on each change, and keys must be inserted in order
 
-use std::fmt::{Debug,Display};
+use std::fmt::{Display};
 use fst::{MapBuilder,Map};
 
 use super::{Key, KeyValue, InsertResult, RemoveResult, DomainLookup};
@@ -40,7 +40,7 @@ impl<V: Ord+Display> Machine<V> {
           let mut key = k.to_vec();
           key.reverse();
 
-          if let Err(e) = builder.insert(&key, index) {
+          if let Err(_e) = builder.insert(&key, index) {
             //println!("error inserting key: {:?}", e);
           } else {
             //println!("inserted {} -> ({}, {})", std::str::from_utf8(&k).unwrap(),

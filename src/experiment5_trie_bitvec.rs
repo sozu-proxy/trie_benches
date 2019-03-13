@@ -8,7 +8,7 @@
 
 use std::{iter,str};
 use std::fmt::Debug;
-use bitvec::{BitVec,BitSlice,Bits,BigEndian};
+use bitvec::{BitVec,BitSlice,BigEndian};
 
 use super::{Key, KeyValue, InsertResult, RemoveResult, DomainLookup};
 
@@ -256,7 +256,7 @@ impl<V:Debug> TrieNode<V> {
               _ => { }
             }
 
-            let k = self.child_keys.remove(0);
+            let _k = self.child_keys.remove(0);
             let mut child = self.children.remove(0);
             self.local_key.extend(child.local_key.drain(..));
             if !child.child_keys.is_empty() {
@@ -387,9 +387,9 @@ mod tests {
 
   #[test]
   fn encode() {
-    let test = encode_6_bits(&b"abcd"[..]);
-    let test = encode_6_bits(&b"efgh"[..]);
-    let test = encode_6_bits(&b"abcd.efgh"[..]);
+    let _test = encode_6_bits(&b"abcd"[..]);
+    let _test = encode_6_bits(&b"efgh"[..]);
+    let _test = encode_6_bits(&b"abcd.efgh"[..]);
     //panic!();
   }
 

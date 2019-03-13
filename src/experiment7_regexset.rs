@@ -3,7 +3,7 @@
 //! this example uses a state machine that must be completely regenerated
 //! on each change, and keys must be inserted in order
 
-use std::fmt::{Debug,Display};
+use std::fmt::{Display};
 use regex::bytes::{RegexSet,RegexSetBuilder};
 use uuid::Uuid;
 use rand::{XorShiftRng, Rng};
@@ -82,7 +82,7 @@ impl<V: Ord+Display> Machine<V> {
       RegexMap::Map(_) => panic!("already finished"),
       RegexMap::Building(ref mut v) => {
         //v.sort_by(|a, b| a.0.iter().rev().cmp(b.0.iter().rev()));
-        set = RegexSetBuilder::new(v.iter().map(|(k, v)| {
+        set = RegexSetBuilder::new(v.iter().map(|(k, _v)| {
           let mut k = k.to_vec();
           k.reverse();
           String::from_utf8(k).unwrap()

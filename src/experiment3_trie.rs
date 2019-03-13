@@ -232,7 +232,7 @@ impl<V:Debug> TrieNode<V> {
               _ => { }
             }
 
-            let k = self.child_keys.remove(0);
+            let _k = self.child_keys.remove(0);
             let mut child = self.children.remove(0);
             self.local_key.extend(child.local_key.drain(..));
             if !child.child_keys.is_empty() {
