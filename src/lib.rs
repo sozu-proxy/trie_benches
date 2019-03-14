@@ -16,6 +16,7 @@ pub mod experiment4_fst;
 pub mod experiment5_trie_bitvec;
 pub mod experiment6_fst_bitvec;
 pub mod experiment7_regexset;
+pub mod experiment8_trie_cursor;
 pub mod linear;
 pub mod hashmap;
 
