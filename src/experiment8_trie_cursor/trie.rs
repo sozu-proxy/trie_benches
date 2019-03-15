@@ -209,8 +209,7 @@ impl<V:Debug> TrieNode<V> {
                   res => res
                 }
               }
-              _ => unimplemented!()
-              /*MatchPatternType::SniWildcard => {
+              Some((sz, MatchPattern::SniWildcard)) => {
                 cursor.advance(1);
                 match new_node.insert(cursor, value) {
                   InsertResult::Ok => {
@@ -219,7 +218,8 @@ impl<V:Debug> TrieNode<V> {
                   },
                   res => res
                 }
-              }*/
+              },
+              None => InsertResult::Failed
             }
 
           }
@@ -300,6 +300,50 @@ impl<V:Debug> TrieNode<V> {
 
     println!("returned {:?}", res);
     res
+  }
+
+  pub fn lookup(&self, mut cursor: HttpCursor) -> Option<&KeyValue<Key,V>> {
+    //println!("looking up {}", cursor);
+
+    match cursor.match_prefix_position(&self.prefix) {
+      Some(pos) => {
+        //println!("prefix difference at {}", pos);
+        return None;
+      }
+      None => {
+        if cursor.at_end() {
+          return self.key_value.as_ref();
+        }
+
+        let c = cursor.next_char();
+        if let Some(index) = self.child_keys.iter().position(|k| *k == c) {
+          let mut cursor2 = cursor.clone();
+          cursor2.advance(1);
+          if let Some(kv) = self.children[index].lookup(cursor2) {
+            return Some(kv);
+          }
+        }
+
+        for (i, r) in self.regexes.iter().enumerate() {
+          let mut cursor2 = cursor.clone();
+          if cursor2.match_regex(r) {
+            if let Some(kv) = self.regex_children[i].lookup(cursor2) {
+              return Some(kv);
+            }
+          }
+        }
+
+        if let Some(child) = self.wildcard.as_ref() {
+          if cursor.match_sni_wildcard() {
+            if let Some(kv) = child.lookup(cursor) {
+              return Some(kv);
+            }
+          }
+        }
+
+        return self.key_value.as_ref();
+      },
+    }
   }
 
   pub fn remove(&mut self, partial_key: &Key) -> RemoveResult {
@@ -405,53 +449,6 @@ impl<V:Debug> TrieNode<V> {
     */
   }
 
-  // specific version that will handle wildcard domains
-  pub fn domain_lookup_recursive(&self, partial_key: &[u8]) -> Option<&KeyValue<Key,V>> {
-    unimplemented!();
-    //assert_ne!(partial_key, &b""[..]);
-
-    /*println!("domain_lookup_recursive: partial_key={}, local_key={}, child_keys={}",
-      str::from_utf8(partial_key).unwrap(),
-      str::from_utf8(&self.local_key).unwrap(),
-      str::from_utf8(&self.child_keys).unwrap(),
-    );
-    */
-
-    /*
-    let pos = partial_key.iter().zip(self.local_key.iter()).position(|(&a,&b)| a != b);
-    match pos {
-      None => {
-        let local_len = self.local_key.len();
-        if partial_key.len() > local_len {
-          match self.child_keys.iter().position(|k| *k == partial_key[local_len]) {
-            None => None,
-            Some(index) => {
-              self.children[index].domain_lookup_recursive(&partial_key[local_len..])
-            }
-          }
-        } else if partial_key.len() == local_len {
-          self.key_value.as_ref()
-        } else {
-          None
-        }
-      },
-      Some(i) => {
-        // check for wildcard
-        if i+1 == self.local_key.len() && self.local_key[i] == '*' as u8 {
-          let c = '.' as u8;
-          if (&partial_key[i..]).contains(&c) {
-            None
-          } else {
-            self.key_value.as_ref()
-          }
-        } else {
-          None
-        }
-
-      }
-    }
-    */
-  }
 
   pub fn print(&self) {
     self.print_recursive(b'.', 0)
@@ -486,28 +483,15 @@ impl<V:Debug> TrieNode<V> {
 }
 
 impl<V: Debug> DomainLookup<V> for TrieNode<V> {
-  // specific version that will handle wildcard domains
   fn domain_insert(&mut self, key: Key, value: V) -> InsertResult {
     let cursor = HttpCursor::new(&key, &b"/"[..]);
     self.insert(cursor, value)
-    /*
-    let mut partial_key = key.clone();
-    partial_key.reverse();
-
-    //handle the root
-    if self.local_key.is_empty() && self.child_keys.is_empty() {
-      self.local_key = partial_key;
-      self.key_value = Some((key, value));
-      return InsertResult::Ok;
-    }
-
-    self.insert_recursive(&partial_key, &key, value)
-      */
   }
 
   // specific version that will handle wildcard domains
   fn domain_remove(&mut self, key: &Key) -> RemoveResult {
-    unimplemented!();
+    //unimplemented!();
+    panic!()
     /*
     let mut partial_key = key.clone();
     partial_key.reverse();
@@ -517,11 +501,7 @@ impl<V: Debug> DomainLookup<V> for TrieNode<V> {
 
   // specific version that will handle wildcard domains
   fn domain_lookup(&self, key: &[u8]) -> Option<&KeyValue<Key,V>> {
-    unimplemented!();
-    /*
-    let mut partial_key = key.to_vec();
-    partial_key.reverse();
-    self.domain_lookup_recursive(&partial_key)
-    */
+    let cursor = HttpCursor::new(&key, &b"/"[..]);
+    self.lookup(cursor)
   }
 }

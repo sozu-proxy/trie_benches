@@ -10,7 +10,7 @@
 pub mod cursor;
 pub mod trie;
 
-use self::trie::*;
+pub use self::trie::*;
 use super::{Key, KeyValue, InsertResult, RemoveResult, DomainLookup};
 
 #[cfg(test)]
@@ -35,8 +35,10 @@ mod tests {
     assert_eq!(root.insert(c, 5), InsertResult::Ok);
     root.print();
 
-    //assert_eq!(root.lookup(&b"abce"[..]), Some(&((&b"abce"[..]).to_vec(), 2)));
-    panic!();
+    let res = root.domain_lookup(&b"www.example.com"[..]).unwrap();
+    assert_eq!(res.1, 2);
+
+    panic!("end test");
   }
 
   #[test]
