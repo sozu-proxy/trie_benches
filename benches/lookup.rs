@@ -46,7 +46,7 @@ fn bench_lookup(c: &mut Criterion) {
       .with_function("exp3", |mut b, n| {
         let mut root: trie::experiment3_trie::TrieNode<u8> = trie::experiment3_trie::TrieNode::root();
         lookup(&mut root, &mut b, *n);
-        println!("exp3 byte size: {}", root.size());
+        //println!("exp3 byte size: {}", root.size());
       })
       .with_function("exp4", |b, n| {
         let mut root: trie::experiment4_fst::Machine<u8> = trie::experiment4_fst::Machine::new();

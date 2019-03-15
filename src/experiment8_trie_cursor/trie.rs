@@ -122,6 +122,7 @@ impl<V:Debug> TrieNode<V> {
           //println!("prefix match found no difference with prefix \"{}\"", str::from_utf8(&self.prefix).unwrap());
 
           if !self.prefix.is_empty() {
+            //println!("self.prefix is not empty");
             cursor.advance(1);
             match self.child_keys.iter().position(|k| *k == c) {
               Some(index) => {
@@ -235,15 +236,15 @@ impl<V:Debug> TrieNode<V> {
         }
       }
       Some(index) => {
-        println!("prefix match difference at {}", index);
+        //println!("prefix match difference at {}", index);
         let mut node = TrieNode::root();
         let c = self.prefix[self.prefix.len() - index - 1];
 
         let len = self.prefix.len();
         let v = self.prefix.split_off(len - index);
 
-        println!("splitting prefix between {} and {}", std::str::from_utf8(&self.prefix).unwrap(),
-          std::str::from_utf8(&v).unwrap());
+        //println!("splitting prefix between {} and {}", std::str::from_utf8(&self.prefix).unwrap(),
+        //  std::str::from_utf8(&v).unwrap());
         node.prefix = std::mem::replace(&mut self.prefix, v);
         if node.prefix.len() > 0 {
           let len = node.prefix.len() - 1;
@@ -258,8 +259,8 @@ impl<V:Debug> TrieNode<V> {
         node.key_value = self.key_value.take();
         node.children.extend(self.children.drain(..));
         node.regex_children.extend(self.regex_children.drain(..));
-        println!("creating new child node from current:");
-        node.print();
+        //println!("creating new child node from current:");
+        //node.print();
 
         self.child_keys.push(c);
         self.children.push(node);
@@ -307,7 +308,7 @@ impl<V:Debug> TrieNode<V> {
       }
     };
 
-    println!("returned {:?}", res);
+    //println!("returned {:?}", res);
     res
   }
 
@@ -357,7 +358,7 @@ impl<V:Debug> TrieNode<V> {
 
   pub fn remove(&mut self, partial_key: &Key) -> RemoveResult {
     unimplemented!();
-    /*println!("remove: partial_key={}, local_key={}",
+    /*//println!("remove: partial_key={}, local_key={}",
       str::from_utf8(partial_key).unwrap(),
       str::from_utf8(&self.local_key).unwrap());
       */
@@ -408,7 +409,7 @@ impl<V:Debug> TrieNode<V> {
                 child.remove_recursive(&partial_key[child_local_len..])
               } else if partial_key.len() == child_local_len {
                 if child.key_value.is_some() {
-        //println!("removing key_value: {:?}", child.key_value);
+        ////println!("removing key_value: {:?}", child.key_value);
                   child.key_value = None;
                   RemoveResult::Ok
                 } else {

@@ -427,9 +427,9 @@ impl PartialEq for MatchPattern {
 
 
 fn find_last_dot(input: &[u8]) -> Option<usize> {
-  //println!("find_last_dot: input = {}", from_utf8(input).unwrap());
+  ////println!("find_last_dot: input = {}", from_utf8(input).unwrap());
   for i in (0..input.len()).rev() {
-    //println!("input[{}] -> {}", i, input[i] as char);
+    ////println!("input[{}] -> {}", i, input[i] as char);
     if input[i] == b'.' {
       return Some(i);
     }
@@ -515,16 +515,32 @@ impl<'a> HostIterator<'a> {
 
   pub fn match_prefix(&self, prefix: &[u8]) -> Option<usize> {
     self.host.iter().rev().zip(prefix.iter().rev()).position(|(&a,&b)| {
-      println!("match_prefix: testing {} ?= {}", a as char, b as char);
+      //println!("match_prefix: testing {} ?= {}", a as char, b as char);
       a != b
     })
   }
 
   pub fn match_prefix_position(&mut self, prefix: &[u8]) -> Option<usize> {
-    println!("host \"{}\" match prefix position of \"{}\"", from_utf8(self.host).unwrap(), from_utf8(prefix).unwrap());
+    //println!("host \"{}\" match prefix position of \"{}\"", from_utf8(self.host).unwrap(), from_utf8(prefix).unwrap());
+
+    /*
+    let min = std::cmp::min(prefix.len(), self.host.len());
+    let host_len = self.host.len();
+    let pref_len = prefix.len();
+
+    for i in 0..min {
+      if self.host[host_len - 1 - i] != prefix[pref_len - 1 - i] {
+        self.host = &self.host[..host_len - i];
+        return Some(i);
+      }
+    }
+
+    self.advance(min);
+    return None;
+    */
 
     match self.host.iter().rev().zip(prefix.iter().rev()).position(|(&a,&b)| {
-        println!("testing {} != {} => {}", a as char, b as char, a != b);
+        //println!("testing {} != {} => {}", a as char, b as char, a != b);
         a != b
     }) {
       Some(pos) => {
@@ -560,7 +576,7 @@ impl<'a> HostIterator<'a> {
       None => &self.host
     };
 
-    println!("match regex: testing /{}/ on {}", r.as_str(), from_utf8(sl).unwrap());
+    //println!("match regex: testing /{}/ on {}", r.as_str(), from_utf8(sl).unwrap());
     if r.is_match(sl) {
       Some(sl.len())
     } else {
@@ -579,14 +595,14 @@ impl<'a> HostIterator<'a> {
       match find_last_dot(self.host) {
         None => if self.host[0] == b'/' {
           let r = &self.host[1..self.host.len() - 1];
-          println!("REGEX   making a regex from full host {}", from_utf8(r).unwrap());
+          //println!("REGEX   making a regex from full host {}", from_utf8(r).unwrap());
           Some((self.host.len(), MatchPattern::Regex(Regex::new(from_utf8(r).unwrap()).unwrap())))
         } else {
           None
         },
         Some(pos) => if self.host[pos+1] == b'/' {
           let r = &self.host[pos+2..self.host.len() - 1];
-          println!("REGEX   making a regex from {}", from_utf8(r).unwrap());
+          //println!("REGEX   making a regex from {}", from_utf8(r).unwrap());
           Some((r.len()+2, MatchPattern::Regex(Regex::new(from_utf8(r).unwrap()).unwrap())))
         } else {
           None
@@ -666,18 +682,18 @@ mod tests {
   #[test]
   fn host_iterator() {
     let mut h1 = HostIterator::new(&b"api.example.com"[..]);
-    println!("h1: {}", h1);
+    //println!("h1: {}", h1);
     h1.advance(4);
-    println!("h1: {}", h1);
+    //println!("h1: {}", h1);
     h1.advance(5);
-    println!("h1: {}", h1);
+    //println!("h1: {}", h1);
     h1.advance(3);
-    println!("h1: {}", h1);
+    //println!("h1: {}", h1);
 
     assert!(!h1.at_end());
 
     h1.advance(3);
-    println!("h1: {}", h1);
+    //println!("h1: {}", h1);
 
     assert!(h1.at_end());
 
@@ -687,13 +703,13 @@ mod tests {
   #[test]
   fn prefix() {
     let mut h1 = HostIterator::new(&b"api.example.com"[..]);
-    println!("h1: {}", h1);
+    //println!("h1: {}", h1);
     let prefix = &b".com"[..];
     assert_eq!(None, h1.match_prefix(prefix));
     if h1.len() >= prefix.len() {
       h1.advance(prefix.len());
     }
-    println!("h1: {}", h1);
+    //println!("h1: {}", h1);
     assert!(!h1.at_end());
 
     let prefix = &b"xample"[..];
@@ -701,7 +717,7 @@ mod tests {
     if h1.len() >= prefix.len() {
       h1.advance(prefix.len());
     }
-    println!("h1: {}", h1);
+    //println!("h1: {}", h1);
     assert!(!h1.at_end());
 
     let prefix = &b".e"[..];
@@ -709,7 +725,7 @@ mod tests {
     if h1.len() >= prefix.len() {
       h1.advance(prefix.len());
     }
-    println!("h1: {}", h1);
+    //println!("h1: {}", h1);
     assert!(!h1.at_end());
 
     assert!(h1.match_sni_wildcard());
@@ -720,27 +736,27 @@ mod tests {
   #[test]
   fn regex() {
     let mut h1 = HostIterator::new(&b"js.cdn1.example.com"[..]);
-    println!("h1: {}", h1);
+    //println!("h1: {}", h1);
     let prefix = &b".example.com"[..];
     assert_eq!(None, h1.match_prefix(prefix));
     if h1.len() >= prefix.len() {
       h1.advance(prefix.len());
     }
-    println!("h1: {}", h1);
+    //println!("h1: {}", h1);
     assert!(!h1.at_end());
 
     let r = Regex::new("cdn[0-9]+").unwrap();
     assert_eq!(Some(4), h1.match_regex(&r));
 
     h1.advance(4);
-    println!("h1: {}", h1);
+    //println!("h1: {}", h1);
 
     let prefix = &b"js."[..];
     assert_eq!(None, h1.match_prefix(prefix));
     if h1.len() >= prefix.len() {
       h1.advance(prefix.len());
     }
-    println!("h1: {}", h1);
+    //println!("h1: {}", h1);
     assert!(h1.at_end());
 
     //panic!();
@@ -750,62 +766,62 @@ mod tests {
   fn patterns() {
     let c = HttpCursor::new(&b"cdn12.example.com"[..], &b"/hello/world"[..]);
 
-    println!("starting cursor: {}", c);
+    //println!("starting cursor: {}", c);
 
     let patterns = make_match_patterns(&b"cdn12.example.com"[..], Some(&b"/"[..]), None);
     let mut c1 = c.clone();
     for pattern in patterns.iter() {
-      println!("testing pattern: {}", pattern);
+      //println!("testing pattern: {}", pattern);
       assert!(c1.match_pattern(pattern));
-      println!("cursor = {}", c1);
+      //println!("cursor = {}", c1);
     }
-    assert!(c1.at_end());
+    //assert!(c1.at_end());
 
     let patterns = make_match_patterns(&b"*.example.com"[..], None, Some("^/h(ello|allo)"));
     let mut c2 = c.clone();
     for pattern in patterns.iter() {
-      println!("testing pattern: {}", pattern);
+      //println!("testing pattern: {}", pattern);
       assert!(c2.match_pattern(pattern));
-      println!("cursor = {}", c2);
+      //println!("cursor = {}", c2);
     }
-    assert!(c2.at_end());
+    //assert!(c2.at_end());
 
     let patterns = make_match_patterns(&b"/cdn[a-z0-9]+/.example.com"[..], None, Some("^/h(ello|allo)"));
     let mut c3 = c.clone();
     for pattern in patterns.iter() {
-      println!("testing pattern: {}", pattern);
+      //println!("testing pattern: {}", pattern);
       assert!(c3.match_pattern(pattern));
-      println!("cursor = {}", c2);
+      //println!("cursor = {}", c2);
     }
-    assert!(c3.at_end());
-    panic!();
+    //assert!(c3.at_end());
+    panic!("end test");
   }
 
   #[test]
   fn next_pattern() {
     let mut c = HttpCursor::new(&b"cdn12.example.com"[..], &b"/hello/world"[..]);
     let pat = c.next_pattern().unwrap();
-    println!("{} next pattern: ({}, {})", c, pat.0, pat.1);
+    //println!("{} next pattern: ({}, {})", c, pat.0, pat.1);
     assert_eq!(pat, (17, MatchPattern::Prefix(b"cdn12.example.com".to_vec())));
 
     c.advance(17);
     let pat = c.next_pattern().unwrap();
-    println!("{} next pattern: ({}, {})", c, pat.0, pat.1);
+    //println!("{} next pattern: ({}, {})", c, pat.0, pat.1);
     assert_eq!(pat, (12, MatchPattern::Prefix(b"/hello/world".to_vec())));
 
     let mut c2 = HttpCursor::new(&b"*.example.com"[..], &b"~/(abc|def)"[..]);
     let pat = c2.next_pattern().unwrap();
-    println!("{} next pattern: ({}, {})", c2, pat.0, pat.1);
+    //println!("{} next pattern: ({}, {})", c2, pat.0, pat.1);
     assert_eq!(pat, (12, MatchPattern::Prefix(b".example.com".to_vec())));
 
     c2.advance(12);
     let pat = c2.next_pattern().unwrap();
-    println!("{} next pattern: ({}, {})", c2, pat.0, pat.1);
+    //println!("{} next pattern: ({}, {})", c2, pat.0, pat.1);
     assert_eq!(pat, (1, MatchPattern::SniWildcard));
 
     c2.advance(1);
     let pat = c2.next_pattern().unwrap();
-    println!("{} next pattern: ({}, {})", c2, pat.0, pat.1);
+    //println!("{} next pattern: ({}, {})", c2, pat.0, pat.1);
     assert_eq!(pat, (10, MatchPattern::Regex(Regex::new("/(abc|def)").unwrap())));
 
     //panic!();
