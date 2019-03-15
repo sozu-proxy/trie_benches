@@ -11,6 +11,7 @@ pub mod cursor;
 pub mod trie;
 
 pub use self::trie::*;
+pub use self::cursor::*;
 use super::{Key, KeyValue, InsertResult, RemoveResult, DomainLookup};
 
 #[cfg(test)]
@@ -44,6 +45,52 @@ mod tests {
   #[test]
   fn size() {
     assert_eq!(160, ::std::mem::size_of::<TrieNode<usize>>());
+  }
+
+  #[test]
+  fn lookup() {
+    use gen_seed::*;
+
+    let mut root: TrieNode<u8> = TrieNode::root();
+    let nb_elem_seed = 100;
+    seed_bench_trie(&mut root, nb_elem_seed);
+    root.print();
+    seed_known_domain(&mut root);
+    root.print();
+    /*root.domain_insert(Vec::from(&b"axofugal.obelis.com"[..]), 5);
+    root.print();
+    root.domain_insert(Vec::from(&b"washtucna.obeliskoide.org"[..]), 5);
+    root.print();
+    root.domain_insert(Vec::from(&b"co-adjust.walll-fed.net"[..]), 5);
+    root.print();
+    root.domain_insert(Vec::from(&b"axonne.coadminnistration.gov"[..]), 5);
+    root.print();
+    root.domain_insert(Vec::from(&b"washwomean.coadjuvant.mil"[..]), 5);
+    root.print();
+    root.domain_insert(Vec::from(&b"obeliske.coadjuv.io"[..]), 5);
+    root.print();
+    root.domain_insert(Vec::from(&b"coadunatione.coadministration.th"[..]), 5);
+    root.print();
+    root.domain_insert(Vec::from(&b"axolemma.aaaaxole.ca"[..]), 5);
+    root.print();
+    root.domain_insert(Vec::from(&b"washtail.coadeejute.au"[..]), 5);
+    root.print();
+    root.domain_insert(Vec::from(&b"axolema.washe-pote.rs"[..]), 5);
+    root.print();
+    */
+
+    root.domain_lookup(b"washtucna.obeliskoide.org").unwrap();
+    root.domain_lookup(b"co-adjust.walll-fed.net").unwrap();
+    root.domain_lookup(b"axonne.coadminnistration.gov").unwrap();
+    root.domain_lookup(b"axofugal.obelis.com").unwrap();
+    root.domain_lookup(b"washwomean.coadjuvant.mil").unwrap();
+    root.domain_lookup(b"obeliske.coadjuv.io").unwrap();
+    root.domain_lookup(b"coadunatione.coadministration.th").unwrap();
+    root.domain_lookup(b"axolemma.aaaaxole.ca").unwrap();
+    root.domain_lookup(b"washtail.coadeejute.au").unwrap();
+    root.domain_lookup(b"axolema.washe-pote.rs").unwrap();
+
+    panic!("end test");
   }
 
 /*

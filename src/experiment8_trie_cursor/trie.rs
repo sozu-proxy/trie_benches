@@ -70,7 +70,7 @@ impl<V:Debug> TrieNode<V> {
 
   //pub fn insert<'a>(&mut self, key: Key, value: V) -> InsertResult {
   pub fn insert<'a>(&mut self, mut cursor: HttpCursor<'a>, value: V) -> InsertResult {
-    println!("insert: testing {}", cursor);
+    //println!("insert: testing {}", cursor);
     if cursor.at_end() {
       self.key_value = Some((self.prefix.clone(), value));
       return InsertResult::Ok;
@@ -119,7 +119,7 @@ impl<V:Debug> TrieNode<V> {
           }
         }
         MatchPatternType::Prefix(c) => {
-          println!("prefix match found no difference with prefix \"{}\"", str::from_utf8(&self.prefix).unwrap());
+          //println!("prefix match found no difference with prefix \"{}\"", str::from_utf8(&self.prefix).unwrap());
 
           if !self.prefix.is_empty() {
             cursor.advance(1);
@@ -129,7 +129,7 @@ impl<V:Debug> TrieNode<V> {
               },
               None => {
                 let mut node = TrieNode::root();
-                println!("inserting new node with cursor {}", cursor);
+                //println!("inserting new node with cursor {}", cursor);
                 match node.insert(cursor, value) {
                   InsertResult::Ok => {
                     self.child_keys.push(c);
@@ -141,12 +141,12 @@ impl<V:Debug> TrieNode<V> {
               }
             }
           } else {
-            println!("self.prefix is empty, cursor is {}", cursor);
+            //println!("self.prefix is empty, cursor is {}", cursor);
 
             let mut new_node = TrieNode::root();
             match cursor.next_pattern() {
               Some((sz, MatchPattern::Prefix(prefix))) => {
-                if self.key_value.is_none() {
+                if self.child_keys.is_empty() && self.key_value.is_none() {
                   cursor.advance(sz);
                   self.prefix = prefix;
                 }
@@ -155,14 +155,23 @@ impl<V:Debug> TrieNode<V> {
                   match cursor.next_pattern_type() {
                     MatchPatternType::Prefix(c) => {
                       cursor.advance(1);
-                      println!("inserting new prefix node with cursor {}", cursor);
-                      match new_node.insert(cursor, value) {
-                        InsertResult::Ok => {
-                          self.child_keys.push(c);
-                          self.children.push(new_node);
-                          InsertResult::Ok
+
+                      match self.child_keys.iter().position(|k| *k == c) {
+                        Some(index) => {
+                          self.children[index].insert(cursor, value)
                         },
-                        res => res
+                        None => {
+                          let mut node = TrieNode::root();
+                          //println!("inserting new node with cursor {}", cursor);
+                          match node.insert(cursor, value) {
+                            InsertResult::Ok => {
+                              self.child_keys.push(c);
+                              self.children.push(node);
+                              InsertResult::Ok
+                            },
+                            res => res
+                          }
+                        }
                       }
                     }
                     MatchPatternType::Regex => {
@@ -193,7 +202,7 @@ impl<V:Debug> TrieNode<V> {
                     }
                   }
                 } else {
-                  println!("cursor is at end: {}", cursor);
+                  //println!("cursor is at end: {}", cursor);
                   self.key_value = Some((self.prefix.clone(), value));
                   InsertResult::Ok
                 }

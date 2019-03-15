@@ -48,7 +48,7 @@ pub fn seed_bench_trie<T: DomainLookup<u8>>(root: &mut T, nb_elems_seed: i32) {
 
 pub fn seed_known_domain<T: DomainLookup<u8>>(root: &mut T) {
     root.domain_insert(Vec::from(&b"axofugal.obelis.com"[..]), 5);
-    root.domain_insert(Vec::from(&b"Washtucna.obeliskoide.org"[..]), 5);
+    root.domain_insert(Vec::from(&b"washtucna.obeliskoide.org"[..]), 5);
     root.domain_insert(Vec::from(&b"co-adjust.walll-fed.net"[..]), 5);
     root.domain_insert(Vec::from(&b"axonne.coadminnistration.gov"[..]), 5);
     root.domain_insert(Vec::from(&b"washwomean.coadjuvant.mil"[..]), 5);
