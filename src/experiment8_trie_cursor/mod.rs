@@ -22,17 +22,25 @@ mod tests {
     let mut root: TrieNode<u8> = TrieNode::root();
     root.print();
 
-    assert_eq!(root.insert(Vec::from(&b"abcd"[..]), 1), InsertResult::Ok);
+    assert_eq!(root.domain_insert(Vec::from(&b"test.com"[..]), 1), InsertResult::Ok);
     root.print();
-    assert_eq!(root.insert(Vec::from(&b"abce"[..]), 2), InsertResult::Ok);
+    assert_eq!(root.domain_insert(Vec::from(&b"www.example.com"[..]), 2), InsertResult::Ok);
     root.print();
-    assert_eq!(root.insert(Vec::from(&b"abgh"[..]), 3), InsertResult::Ok);
+    assert_eq!(root.domain_insert(Vec::from(&b"cdn./a[0-9]*/.example.com"[..]), 3), InsertResult::Ok);
+    root.print();
+    assert_eq!(root.domain_insert(Vec::from(&b"*.js.example.com"[..]), 4), InsertResult::Ok);
     root.print();
 
     //assert_eq!(root.lookup(&b"abce"[..]), Some(&((&b"abce"[..]).to_vec(), 2)));
-    //assert!(false);
+    panic!();
   }
 
+  #[test]
+  fn size() {
+    assert_eq!(160, ::std::mem::size_of::<TrieNode<usize>>());
+  }
+
+/*
   #[test]
   fn remove() {
     let mut root: TrieNode<u8> = TrieNode::root();
@@ -231,4 +239,5 @@ mod tests {
     assert_eq!(48, ::std::mem::size_of::<TrieNode4Regex2<usize>>());
     assert_eq!(0, ::std::mem::size_of::<TrieNode4Wildcard>());
   }
+*/
 }

@@ -4,38 +4,26 @@ use std::fmt::Debug;
 use super::{Key, KeyValue, InsertResult, RemoveResult, DomainLookup};
 use super::cursor::*;
 
-#[derive(Clone,Debug,PartialEq)]
+#[derive(Clone,Debug)]
 pub struct TrieNode<V> {
   key_value: Option<KeyValue<Key, V>>,
-  matcher: TrieNodeMatch<V>,
-}
-
-#[derive(Clone,Debug,PartialEq)]
-enum TrieNodeMatch<V> {
-  None,
-  HostPrefix(TrieNodePrefix<V>),
-  HostRegex(TrieNodeRegex<V>),
-  HostWildCard(TrieNodeWildcard),
-  PathPrefix(TrieNodePrefix<V>),
-  PathRegex(TrieNodeRegex<V>),
-}
-
-#[derive(Clone,Debug,PartialEq)]
-pub struct TrieNodePrefix<V> {
-  local_key:  Key,
+  prefix: Key,
   child_keys: Vec<u8>,
-  children:   Vec<TrieNode<V>>,
-}
-
-#[derive(Clone,Debug)]
-pub struct TrieNodeRegex<V> {
   regexes: Vec<regex::bytes::Regex>,
+  wildcard: Option<Box<TrieNode<V>>>,
   children: Vec<TrieNode<V>>,
+  regex_children: Vec<TrieNode<V>>,
 }
 
-impl<V: PartialEq> PartialEq for TrieNodeRegex<V> {
-  fn eq(&self, other: &TrieNodeRegex<V>) -> bool {
-    if self.children == other.children && self.regexes.len() == other.regexes.len() {
+impl<V: PartialEq> PartialEq for TrieNode<V> {
+  fn eq(&self, other: &TrieNode<V>) -> bool {
+    if self.key_value == other.key_value &&
+      self.prefix == other.prefix &&
+        self.child_keys == other.child_keys &&
+        self.wildcard == other.wildcard &&
+        self.children == other.children &&
+        self.regex_children == other.regex_children &&
+        self.regexes.len() == other.regexes.len() {
       for i in 0..self.regexes.len() {
         if self.regexes[i].as_str() != other.regexes[i].as_str() {
           return false;
@@ -48,9 +36,6 @@ impl<V: PartialEq> PartialEq for TrieNodeRegex<V> {
     }
   }
 }
-
-#[derive(Clone,Debug,PartialEq)]
-pub struct TrieNodeWildcard;
 
 impl<V:Debug> TrieNode<V> {
   /*pub fn new(key: Key, value: V) -> TrieNode<V> {
@@ -74,109 +59,245 @@ impl<V:Debug> TrieNode<V> {
   pub fn root() -> TrieNode<V> {
     TrieNode {
       key_value: None,
-      matcher: TrieNodeMatch::None,
+      prefix: vec![],
+      child_keys: vec![],
+      regexes: vec![],
+      wildcard: None,
+      children: vec![],
+      regex_children: vec![],
     }
   }
 
-  pub fn insert(&mut self, key: Key, value: V) -> InsertResult {
-    unimplemented!();
-    /*
-    //handle the root
-    if self.local_key.is_empty() && self.child_keys.is_empty() {
-      self.local_key = key.clone();
-      self.key_value = Some((key, value));
+  //pub fn insert<'a>(&mut self, key: Key, value: V) -> InsertResult {
+  pub fn insert<'a>(&mut self, mut cursor: HttpCursor<'a>, value: V) -> InsertResult {
+    println!("insert: testing {}", cursor);
+    if cursor.at_end() {
+      self.key_value = Some((self.prefix.clone(), value));
       return InsertResult::Ok;
     }
 
-    let res = self.insert_recursive(&key, &key, value);
-    assert_ne!(res, InsertResult::Failed);
-    //println!("adding {}", str::from_utf8(&key).unwrap());
-    res
-    */
-  }
-
-  pub fn insert_recursive(&mut self, partial_key: &[u8], key: &Key, value: V) -> InsertResult {
-    unimplemented!();
-    //assert_ne!(partial_key, &b""[..]);
-
-    /*println!("insert_recursive: partial_key={}, local_key={}",
-      str::from_utf8(partial_key).unwrap(),
-      str::from_utf8(&self.local_key).unwrap());
-    */
-
-    /*
-    let pos = partial_key.iter().zip(self.local_key.iter()).position(|(&a,&b)| a != b);
-    match pos {
-      None => {
-        if partial_key.len() > self.local_key.len() {
-          //match self.child_keys.iter().position(|k| *k == partial_key[self.local_key.len()]) {
-          match self.child_keys.iter().position(|k| *k == partial_key[self.local_key.len()]) {
-            None => {
-              let new_child = TrieNode {
-                key_value:  Some((key.clone(), value)),
-                local_key:  partial_key[self.local_key.len()..].to_vec(),
-                child_keys: vec!(),
-                children:   vec!(),
-              };
-              self.child_keys.push(partial_key[self.local_key.len()]);
-              self.children.push(new_child);
-
-              return InsertResult::Ok;
+    let res = match cursor.match_prefix_position(&self.prefix) {
+      None => match cursor.next_pattern_type() {
+        MatchPatternType::Regex => {
+          if let Some((sz, MatchPattern::Regex(r))) = cursor.next_pattern() {
+            cursor.advance(sz);
+            match self.regexes.iter().position(|reg| reg.as_str() == r.as_str()) {
+              Some(c) => {
+                self.regex_children[c].insert(cursor, value)
+              }
+              None => {
+                let mut node = TrieNode::root();
+                match node.insert(cursor, value) {
+                  InsertResult::Ok => {
+                    self.regexes.push(r);
+                    self.regex_children.push(node);
+                    InsertResult::Ok
+                  },
+                  res => res
+                }
+              }
             }
-            Some(index) => {
-              return self.children[index].insert_recursive(&partial_key[self.local_key.len()..], key, value);
-            }
-          }
-        } else if partial_key.len() == self.local_key.len() {
-          if self.key_value.is_some() {
-            return InsertResult::Existing;
           } else {
-            self.key_value =  Some((key.clone(), value));
+            panic!("next pattern should be a regex");
+            InsertResult::Failed
           }
-        } else {
-          //partial key is smaller, so insert the new value above
-          //the current node
-          let new_child = TrieNode {
-            key_value:  self.key_value.take(),
-            local_key:  self.local_key[partial_key.len()..].to_vec(),
-            child_keys: vec!(),
-            children:   vec!(),
-          };
-
-          self.key_value =  Some((key.clone(), value));
-          self.child_keys.push(self.local_key[partial_key.len()]);
-          self.children.push(new_child);
-          self.local_key = partial_key.to_vec();
-
-          return InsertResult::Ok;
-
         }
-      },
-      Some(index) => {
-        let new_child1 = TrieNode {
-          key_value:  self.key_value.take(),
-          local_key:  self.local_key[index..].to_vec(),
-          child_keys: self.child_keys.drain(..).collect(),
-          children:   self.children.drain(..).collect(),
-        };
-        let new_child2 = TrieNode {
-          key_value:  Some((key.clone(), value)),
-          local_key:  partial_key[index..].to_vec(),
-          child_keys: vec!(),
-          children:   vec!(),
-        };
+        MatchPatternType::SniWildcard => {
+          cursor.advance(1);
+          if self.wildcard.is_none() {
+            let mut node = TrieNode::root();
+            match node.insert(cursor, value) {
+              InsertResult::Ok => {
+                //self.wildcard = Some(Box::new(node));
+                InsertResult::Ok
+              },
+              res => res
+            }
+          } else {
+            let node = self.wildcard.as_mut().unwrap();
+            node.insert(cursor, value)
+          }
+        }
+        MatchPatternType::Prefix(c) => {
+          println!("prefix match found no difference with prefix \"{}\"", str::from_utf8(&self.prefix).unwrap());
 
-        self.child_keys.push(self.local_key[index]);
-        self.children.push(new_child1);
-        self.child_keys.push(partial_key[index]);
-        self.children.push(new_child2);
-        self.local_key.truncate(index);
-        return InsertResult::Ok;
+          if !self.prefix.is_empty() {
+            cursor.advance(1);
+            match self.child_keys.iter().position(|k| *k == c) {
+              Some(index) => {
+                self.children[index].insert(cursor, value)
+              },
+              None => {
+                let mut node = TrieNode::root();
+                println!("inserting new node with cursor {}", cursor);
+                match node.insert(cursor, value) {
+                  InsertResult::Ok => {
+                    self.child_keys.push(c);
+                    self.children.push(node);
+                    InsertResult::Ok
+                  },
+                  res => res
+                }
+              }
+            }
+          } else {
+            println!("self.prefix is empty, cursor is {}", cursor);
+
+            let mut new_node = TrieNode::root();
+            match cursor.next_pattern() {
+              Some((sz, MatchPattern::Prefix(prefix))) => {
+                cursor.advance(sz);
+                self.prefix = prefix;
+
+                if !cursor.at_end() {
+                  match cursor.next_pattern_type() {
+                    MatchPatternType::Prefix(c) => {
+                      cursor.advance(1);
+                      println!("inserting new prefix node with cursor {}", cursor);
+                      match new_node.insert(cursor, value) {
+                        InsertResult::Ok => {
+                          self.child_keys.push(c);
+                          self.children.push(new_node);
+                          InsertResult::Ok
+                        },
+                        res => res
+                      }
+                    }
+                    MatchPatternType::Regex => {
+                      if let Some((sz, MatchPattern::Regex(r))) = cursor.next_pattern() {
+                        cursor.advance(sz);
+                        match new_node.insert(cursor, value) {
+                          InsertResult::Ok => {
+                            self.regexes.push(r);
+                            self.regex_children.push(new_node);
+                            InsertResult::Ok
+                          },
+                          res => res
+                        }
+                      } else {
+                        panic!("next pattern should be a regex");
+                        InsertResult::Failed
+                      }
+                    }
+                    MatchPatternType::SniWildcard => {
+                      cursor.advance(1);
+                      match new_node.insert(cursor, value) {
+                        InsertResult::Ok => {
+                          self.wildcard = Some(Box::new(new_node));
+                          InsertResult::Ok
+                        },
+                        res => res
+                      }
+                    }
+                  }
+                } else {
+                  println!("cursor is at end");
+                  self.key_value = Some((self.prefix.clone(), value));
+                  InsertResult::Ok
+                }
+              }
+              Some((sz, MatchPattern::Regex(r))) => {
+                cursor.advance(sz);
+                match new_node.insert(cursor, value) {
+                  InsertResult::Ok => {
+                    self.regexes.push(r);
+                    self.regex_children.push(new_node);
+                    InsertResult::Ok
+                  },
+                  res => res
+                }
+              }
+              _ => unimplemented!()
+              /*MatchPatternType::SniWildcard => {
+                cursor.advance(1);
+                match new_node.insert(cursor, value) {
+                  InsertResult::Ok => {
+                    self.wildcard = Some(Box::new(new_node));
+                    InsertResult::Ok
+                  },
+                  res => res
+                }
+              }*/
+            }
+
+          }
+        }
       }
-    }
+      Some(index) => {
+        println!("prefix match difference at {}", index);
+        let mut node = TrieNode::root();
+        let c = self.prefix[self.prefix.len() - index - 1];
 
-    return InsertResult::Ok;
-    */
+        let len = self.prefix.len();
+        let v = self.prefix.split_off(len - index);
+
+        println!("splitting prefix between {} and {}", std::str::from_utf8(&self.prefix).unwrap(),
+          std::str::from_utf8(&v).unwrap());
+        node.prefix = std::mem::replace(&mut self.prefix, v);
+        if node.prefix.len() > 0 {
+          let len = node.prefix.len() - 1;
+          node.prefix.truncate(len);
+        }
+
+        //println!("child node prefix: {}", std::str::from_utf8(self.pref
+        //node.prefix = (&self.prefix[..index]).to_vec();
+        node.regexes.extend(self.regexes.drain(..));
+        node.child_keys.extend(self.child_keys.drain(..));
+        node.wildcard = self.wildcard.take();
+        node.key_value = self.key_value.take();
+        node.children.extend(self.children.drain(..));
+        node.regex_children.extend(self.regex_children.drain(..));
+        println!("creating new child node from current:");
+        node.print();
+
+        self.child_keys.push(c);
+        self.children.push(node);
+
+        let mut new_node = TrieNode::root();
+        match cursor.next_pattern_type() {
+          MatchPatternType::Prefix(c) => {
+            cursor.advance(1);
+            match new_node.insert(cursor, value) {
+              InsertResult::Ok => {
+                self.child_keys.push(c);
+                self.children.push(new_node);
+                InsertResult::Ok
+              },
+              res => res
+            }
+          }
+          MatchPatternType::Regex => {
+            if let Some((sz, MatchPattern::Regex(r))) = cursor.next_pattern() {
+              cursor.advance(sz);
+              match new_node.insert(cursor, value) {
+                InsertResult::Ok => {
+                  self.regexes.push(r);
+                  self.regex_children.push(new_node);
+                  InsertResult::Ok
+                },
+                res => res
+              }
+            } else {
+              panic!("next pattern should be a regex");
+              InsertResult::Failed
+            }
+          }
+          MatchPatternType::SniWildcard => {
+            cursor.advance(1);
+            match new_node.insert(cursor, value) {
+              InsertResult::Ok => {
+                self.wildcard = Some(Box::new(new_node));
+                InsertResult::Ok
+              },
+              res => res
+            }
+          }
+        }
+      }
+    };
+
+    println!("returned {:?}", res);
+    res
   }
 
   pub fn remove(&mut self, partial_key: &Key) -> RemoveResult {
@@ -335,31 +456,38 @@ impl<V:Debug> TrieNode<V> {
   }
 
   pub fn print_recursive(&self, partial_key: u8, indent:u8) {
-    unimplemented!();
-    /*
     let raw_prefix:Vec<u8> = iter::repeat(' ' as u8).take(2*indent as usize).collect();
     let prefix = str::from_utf8(&raw_prefix).unwrap();
     let c: char = partial_key.into();
 
     if let Some((ref key, ref value)) = self.key_value {
-    println!("{}{}: {}|({},{:?})", prefix, c,
-      str::from_utf8(&self.local_key).unwrap(),
-      str::from_utf8(&key).unwrap(), value);
+      println!("{}{}: {}|{:?}", prefix, c,
+        str::from_utf8(&key).unwrap(), value);
+      //println!("{}{}: {}|({},{:?})", prefix, c,
+      //  str::from_utf8(&self.prefix).unwrap(),
+      //  str::from_utf8(&key).unwrap(), value);
     } else {
-    println!("{}{}: {}|None", prefix, c,
-      str::from_utf8(&self.local_key).unwrap());
+      println!("{}{}: {}", prefix, c,
+        str::from_utf8(&self.prefix).unwrap());
     }
     for (child_key, ref child) in self.child_keys.iter().zip(self.children.iter()) {
       child.print_recursive(*child_key, indent+1);
     }
-    */
+    for (ref regex, ref child) in self.regexes.iter().zip(self.regex_children.iter()) {
+      println!("  {}/{}/", prefix, regex.as_str());
+      child.print_recursive(b'~', indent+2);
+    }
+    if let Some(child) = self.wildcard.as_ref() {
+      child.print_recursive(b'*', indent+1);
+    }
   }
 }
 
 impl<V: Debug> DomainLookup<V> for TrieNode<V> {
   // specific version that will handle wildcard domains
   fn domain_insert(&mut self, key: Key, value: V) -> InsertResult {
-    unimplemented!();
+    let cursor = HttpCursor::new(&key, &b"/"[..]);
+    self.insert(cursor, value)
     /*
     let mut partial_key = key.clone();
     partial_key.reverse();
