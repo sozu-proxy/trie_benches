@@ -67,6 +67,36 @@ fn bench_lookup(c: &mut Criterion) {
           root.domain_lookup(b"axolema.washe-pote.rs")
         });
       })
+      .with_function("exp8", |b, n| {
+        let mut root: trie::experiment8_trie_cursor::TrieNode<u8> = trie::experiment8_trie_cursor::TrieNode::root();
+        seed_bench_trie(&mut root, *n);
+        seed_known_domain(&mut root);
+
+        assert!(root.domain_lookup(b"washtucna.obeliskoide.org").is_some());
+        assert!(root.domain_lookup(b"co-adjust.walll-fed.net").is_some());
+        assert!(root.domain_lookup(b"axonne.coadminnistration.gov").is_some());
+        assert!(root.domain_lookup(b"axofugal.obelis.com").is_some());
+        assert!(root.domain_lookup(b"washwomean.coadjuvant.mil").is_some());
+        assert!(root.domain_lookup(b"obeliske.coadjuv.io").is_some());
+        assert!(root.domain_lookup(b"coadunatione.coadministration.th").is_some());
+        assert!(root.domain_lookup(b"axolemma.aaaaxole.ca").is_some());
+        assert!(root.domain_lookup(b"washtail.coadeejute.au").is_some());
+        assert!(root.domain_lookup(b"axolema.washe-pote.rs").is_some());
+
+        b.iter(|| {
+          root.domain_lookup(b"washtucna.obeliskoide.org");
+          root.domain_lookup(b"co-adjust.walll-fed.net");
+          root.domain_lookup(b"axonne.coadminnistration.gov");
+          root.domain_lookup(b"axofugal.obelis.com");
+          root.domain_lookup(b"washwomean.coadjuvant.mil");
+          root.domain_lookup(b"obeliske.coadjuv.io");
+          root.domain_lookup(b"coadunatione.coadministration.th");
+          root.domain_lookup(b"axolemma.aaaaxole.ca");
+          root.domain_lookup(b"washtail.coadeejute.au");
+          root.domain_lookup(b"axolema.washe-pote.rs")
+        });
+        //println!("exp3 byte size: {}", root.size());
+      })
       /*.with_function("exp5", |mut b, n| {
         let root: trie::experiment5_trie_bitvec::TrieNode<u8> = trie::experiment5_trie_bitvec::TrieNode::root();
         lookup(root, &mut b, *n);
