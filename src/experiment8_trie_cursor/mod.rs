@@ -16,6 +16,7 @@ use super::{Key, KeyValue, InsertResult, RemoveResult, DomainLookup};
 #[cfg(test)]
 mod tests {
   use super::*;
+  use super::cursor::*;
 
   #[test]
   fn insert() {
@@ -29,6 +30,9 @@ mod tests {
     assert_eq!(root.domain_insert(Vec::from(&b"cdn./a[0-9]*/.example.com"[..]), 3), InsertResult::Ok);
     root.print();
     assert_eq!(root.domain_insert(Vec::from(&b"*.js.example.com"[..]), 4), InsertResult::Ok);
+    root.print();
+    let c = HttpCursor::new(&b"www.example.com"[..], &b"/hello"[..]);
+    assert_eq!(root.insert(c, 5), InsertResult::Ok);
     root.print();
 
     //assert_eq!(root.lookup(&b"abce"[..]), Some(&((&b"abce"[..]).to_vec(), 2)));

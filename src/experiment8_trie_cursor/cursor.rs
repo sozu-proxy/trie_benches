@@ -36,7 +36,7 @@ impl<'a> HttpCursor<'a> {
 
   pub fn at_end(&self) -> bool {
     match self.position {
-      Some(Position::HostUri(ref h, _)) => h.at_end(),
+      Some(Position::HostUri(ref h, u)) => h.at_end() && u.is_empty(),
       Some(Position::Uri(u)) => u.is_empty(),
       None => panic!()
     }
@@ -808,6 +808,6 @@ mod tests {
     println!("{} next pattern: ({}, {})", c2, pat.0, pat.1);
     assert_eq!(pat, (10, MatchPattern::Regex(Regex::new("/(abc|def)").unwrap())));
 
-    panic!();
+    //panic!();
   }
 }

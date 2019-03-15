@@ -146,8 +146,10 @@ impl<V:Debug> TrieNode<V> {
             let mut new_node = TrieNode::root();
             match cursor.next_pattern() {
               Some((sz, MatchPattern::Prefix(prefix))) => {
-                cursor.advance(sz);
-                self.prefix = prefix;
+                if self.key_value.is_none() {
+                  cursor.advance(sz);
+                  self.prefix = prefix;
+                }
 
                 if !cursor.at_end() {
                   match cursor.next_pattern_type() {
@@ -191,7 +193,7 @@ impl<V:Debug> TrieNode<V> {
                     }
                   }
                 } else {
-                  println!("cursor is at end");
+                  println!("cursor is at end: {}", cursor);
                   self.key_value = Some((self.prefix.clone(), value));
                   InsertResult::Ok
                 }
