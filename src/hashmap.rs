@@ -13,16 +13,18 @@ impl Map {
 
 impl DomainLookup<u8> for Map {
   fn domain_insert(&mut self, key: Vec<u8>, value: u8) -> InsertResult {
-    let mut partial_key = key.clone();
-    partial_key.reverse();
-    self.0.insert(partial_key, (key.clone(), value));
+    //let mut partial_key = key.clone();
+    //partial_key.reverse();
+    //self.0.insert(partial_key, (key.clone(), value));
+    self.0.insert(key.clone(), (key, value));
     InsertResult::Ok
   }
 
   fn domain_lookup(&self, key: &[u8]) -> Option<&(Vec<u8>, u8)> {
-    let mut partial_key = key.to_vec();
-    partial_key.reverse();
-    self.0.get(&partial_key)
+    //let mut partial_key = key.to_vec();
+    //partial_key.reverse();
+    //self.0.get(&partial_key)
+    self.0.get(key)
   }
 
   fn domain_remove(&mut self, _key: &Key) -> RemoveResult {

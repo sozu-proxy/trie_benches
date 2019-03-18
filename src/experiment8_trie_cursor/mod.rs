@@ -52,9 +52,10 @@ mod tests {
     use gen_seed::*;
 
     let mut root: TrieNode<u8> = TrieNode::root();
-    let nb_elem_seed = 100;
+    let nb_elem_seed = 1000;
     seed_bench_trie(&mut root, nb_elem_seed);
     root.print();
+    panic!();
     seed_known_domain(&mut root);
     root.print();
     /*root.domain_insert(Vec::from(&b"axofugal.obelis.com"[..]), 5);

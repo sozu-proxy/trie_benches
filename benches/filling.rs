@@ -39,7 +39,7 @@ fn bench_fill(c: &mut Criterion) {
         seed_known_domain(&mut root);
         root.finish();
       }))
-      /*.with_function("exp5", |b, n| b.iter(|| {
+      .with_function("exp5", |b, n| b.iter(|| {
         let mut root: trie::experiment5_trie_bitvec::TrieNode<u8> = trie::experiment5_trie_bitvec::TrieNode::root();
         seed_bench_trie(&mut root, *n);
         seed_known_domain(&mut root);
@@ -56,9 +56,18 @@ fn bench_fill(c: &mut Criterion) {
         trie::experiment7_regexset::seed_known_domain(&mut root);
         root.finish();
       }))
-      */
       .with_function("exp8", |b, n| b.iter(|| {
         let mut root: trie::experiment8_trie_cursor::TrieNode<u8> = trie::experiment8_trie_cursor::TrieNode::root();
+        seed_bench_trie(&mut root, *n);
+        seed_known_domain(&mut root);
+      }))
+      .with_function("exp9", |b, n| b.iter(|| {
+        let mut root: trie::experiment9_hashmap::TrieNode<u8> = trie::experiment9_hashmap::TrieNode::root();
+        seed_bench_trie(&mut root, *n);
+        seed_known_domain(&mut root);
+      }))
+      .with_function("exp10", |b, n| b.iter(|| {
+        let mut root: trie::experiment10_hashmap_siphash::TrieNode<u8> = trie::experiment10_hashmap_siphash::TrieNode::root();
         seed_bench_trie(&mut root, *n);
         seed_known_domain(&mut root);
       }))
